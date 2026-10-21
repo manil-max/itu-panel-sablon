@@ -1,0 +1,1413 @@
+<!doctype html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>İTÜ</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+  /* Sekmeli uygulama: altta gezinme çubuğu (telefon), üstte (geniş ekran). Renkler: mürekkep mavisi + bakır. */
+  :root{
+    --kagit:#f6f4ef; --yuzey:#fffdf8; --cizgi:#e0dbd0; --murekkep:#1b2434; --soluk:#5d6473;
+    --bakir:#b4622a; --deniz:#1f4e6b; --yesil:#2f6b46; --kirmizi:#a8332a;
+    --golge:0 1px 2px rgba(27,36,52,.06), 0 8px 24px rgba(27,36,52,.05);
+    --baslik:"Fraunces",Georgia,serif; --govde:"Inter",system-ui,sans-serif; --mono:"IBM Plex Mono",ui-monospace,monospace;
+    --cubuk:58px;
+  }
+  @media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+    --kagit:#11151d; --yuzey:#171c26; --cizgi:#2a3240; --murekkep:#e8e6e1; --soluk:#98a1b2;
+    --bakir:#e08b4c; --deniz:#7db6d8; --yesil:#63c08a; --kirmizi:#e0776c;
+    --golge:0 1px 2px rgba(0,0,0,.4), 0 10px 30px rgba(0,0,0,.35); color-scheme:dark; } }
+  :root[data-theme="dark"]{
+    --kagit:#11151d; --yuzey:#171c26; --cizgi:#2a3240; --murekkep:#e8e6e1; --soluk:#98a1b2;
+    --bakir:#e08b4c; --deniz:#7db6d8; --yesil:#63c08a; --kirmizi:#e0776c;
+    --golge:0 1px 2px rgba(0,0,0,.4), 0 10px 30px rgba(0,0,0,.35); color-scheme:dark; }
+
+  body{background:var(--kagit);color:var(--murekkep);font-family:var(--govde);line-height:1.5;
+       padding-left:max(14px,env(safe-area-inset-left));padding-right:max(14px,env(safe-area-inset-right));
+       padding-bottom:calc(var(--cubuk) + env(safe-area-inset-bottom,0px) + 16px)}
+  .kap{max-width:820px;margin:0 auto}
+  header.ust{position:sticky;top:env(safe-area-inset-top,0px);z-index:30;background:var(--kagit);
+       padding-block:12px 8px;border-bottom:1px solid var(--cizgi);display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}
+  header.ust h1{font-family:var(--baslik);font-size:19px;margin:0;letter-spacing:-.01em}
+  @media (max-width:699px){ header.ust{display:none} }
+  .kimlik{color:var(--soluk);font-size:12px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .sp{flex:1}
+  .agno{font-family:var(--mono);font-size:12px;color:var(--soluk)}
+
+  /* sekme çubuğu: telefonda altta sabit */
+  nav.sekmeler{position:fixed;left:0;right:0;bottom:0;z-index:40;display:flex;background:var(--yuzey);
+       border-top:1px solid var(--cizgi);padding-bottom:env(safe-area-inset-bottom,0px)}
+  nav.sekmeler button{flex:1;background:none;border:none;font:inherit;color:var(--soluk);cursor:pointer;
+       padding:7px 2px 8px;display:flex;flex-direction:column;align-items:center;gap:2px;font-size:10.5px;
+       border-top:2px solid transparent;margin-top:-1px}
+  nav.sekmeler button .ikon{font-size:17px;line-height:1.1}
+  nav.sekmeler button[aria-selected="true"]{color:var(--bakir);border-top-color:var(--bakir);font-weight:600}
+  nav.sekmeler button .nokta{position:absolute;transform:translate(13px,-3px);width:6px;height:6px;border-radius:50%;background:var(--bakir)}
+  @media (min-width:700px){
+    body{padding-bottom:24px}
+    nav.sekmeler{position:sticky;top:calc(env(safe-area-inset-top,0px) + 48px);bottom:auto;border-top:none;
+         border-bottom:1px solid var(--cizgi);background:var(--kagit);max-width:820px;margin:0 auto;gap:4px}
+    nav.sekmeler button{flex:0 0 auto;flex-direction:row;gap:6px;font-size:13px;padding:8px 14px;border-top:none;
+         border-bottom:2px solid transparent}
+    nav.sekmeler button[aria-selected="true"]{border-bottom-color:var(--bakir)}
+  }
+
+  h2{font-family:var(--baslik);font-size:16px;margin:20px 0 9px;display:flex;align-items:baseline;gap:8px}
+  h2 .say{font-family:var(--govde);font-size:11px;color:var(--soluk);font-weight:500;letter-spacing:.04em;text-transform:uppercase}
+  .kart{background:var(--yuzey);border:1px solid var(--cizgi);border-radius:12px;box-shadow:var(--golge);overflow:hidden}
+  .bos{padding:15px 14px;color:var(--soluk);font-size:13px}
+
+  /* sıradaki ders */
+  .siradaki{padding:14px;display:flex;gap:14px;align-items:flex-start}
+  .siradaki .zaman{font-family:var(--mono);font-size:26px;line-height:1;color:var(--bakir);font-variant-numeric:tabular-nums}
+  .siradaki .zaman span{display:block;font-size:11px;color:var(--soluk);margin-top:4px;font-family:var(--govde)}
+  .siradaki .kod{font-size:17px;font-weight:600}
+  .siradaki .ad{color:var(--soluk);font-size:12.5px}
+  .siradaki .yer{margin-top:4px;font-size:13px}
+  .siradaki .yer b{color:var(--bakir)}
+
+  .ders{display:grid;grid-template-columns:56px 1fr;gap:11px;padding:11px 13px;border-bottom:1px solid var(--cizgi)}
+  .ders:last-child{border-bottom:none}
+  .ders .saat{font-family:var(--mono);font-size:12.5px;color:var(--deniz);font-variant-numeric:tabular-nums;line-height:1.3}
+  .ders .saat span{display:block;color:var(--soluk);font-size:11px}
+  .ders .kod{font-weight:600;font-size:14px}
+  .ders .ad{color:var(--soluk);font-size:12px}
+  .ders .yer{font-size:12.5px;margin-top:2px}
+  .ders .yer b{font-weight:600;color:var(--bakir)}
+  .ders.simdi{background:color-mix(in srgb,var(--bakir) 9%,transparent)}
+  .nokta{display:inline-block;width:9px;height:9px;border-radius:3px;margin-right:6px;vertical-align:1px}
+  .rozet{font-size:10px;letter-spacing:.05em;text-transform:uppercase;color:var(--bakir);font-weight:600}
+
+  /* hafta takvimi */
+  .haftaNav{display:flex;align-items:center;gap:8px;margin:16px 0 10px}
+  .haftaNav button:not(.cip){background:var(--yuzey);border:1px solid var(--cizgi);color:var(--murekkep);
+       border-radius:9px;width:34px;height:34px;font-size:19px;line-height:1;cursor:pointer;font-family:inherit}
+  .haftaNav button:not(.cip):hover{border-color:var(--bakir);color:var(--bakir)}
+  .haftaBilgi{flex:1;min-width:0;text-align:center}
+  .haftaBilgi b{display:block;font-family:var(--baslik);font-size:16px}
+  .haftaBilgi span{font-size:11.5px;color:var(--soluk)}
+  .sutun.tatil{background:repeating-linear-gradient(135deg,color-mix(in srgb,var(--yesil) 12%,transparent) 0 7px,transparent 7px 14px)}
+  .gunBaslik.tatil{color:var(--yesil)}
+  .haftaKutu{overflow-x:auto;padding-bottom:2px;scrollbar-width:none;touch-action:pan-y}
+  .haftaKutu::-webkit-scrollbar{display:none}
+  .hafta{display:grid;grid-template-columns:40px repeat(5,minmax(88px,1fr));min-width:480px}
+  @media (max-width:560px){                /* telefonda tamamı sığsın: yatay kaydırma yok */
+    .haftaKutu{overflow-x:visible}
+    .hafta{min-width:0;grid-template-columns:30px repeat(5,1fr)}
+    .saatler .et{right:4px;font-size:9px}
+    .blok{left:1px;right:1px;padding:1px 3px;font-size:9.5px;border-left-width:3px;border-radius:5px}
+    .blok b{font-size:10px}
+    .blok .s{font-size:9px}
+    .blok .m{display:none}
+    .blok .br{font-size:9.5px}
+    .gunBaslik{font-size:10.5px}
+  }
+  .gunBaslik{font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--soluk);font-weight:600;
+        padding:0 0 5px;text-align:center;border-bottom:1px solid var(--cizgi)}
+  .gunBaslik.bugun{color:var(--bakir)}
+  .saatler{position:relative}
+  .saatler .et{position:absolute;right:7px;font-family:var(--mono);font-size:10px;color:var(--soluk);
+        transform:translateY(-6px);font-variant-numeric:tabular-nums}
+  .sutun{position:relative;border-left:1px solid var(--cizgi)}
+  .sutun .cizgi{position:absolute;left:0;right:0;border-top:1px solid var(--cizgi)}
+  .sutun .cizgi.yarim{border-top-style:dotted;opacity:.55}
+  .sutun.bugun{background:color-mix(in srgb,var(--bakir) 6%,transparent)}
+  .blok{position:absolute;left:2px;right:2px;background:var(--yuzey);border:1px solid var(--cizgi);
+        border-left:3px solid var(--deniz);border-radius:6px;padding:2px 5px;overflow:hidden;font-size:10.5px;line-height:1.2}
+  .blok b{display:block;font-size:11px;line-height:1.2}
+  .blok .s{font-family:var(--mono);font-size:10px;color:var(--soluk);font-variant-numeric:tabular-nums}
+  .blok .m{color:var(--soluk);font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .blok.kisa .s,.blok.kisa .m{display:none}
+  .blok .rozetler{display:flex;flex-wrap:wrap;gap:4px;margin-top:3px}
+  .blok .br{font-size:10px;font-weight:700;letter-spacing:.02em;white-space:nowrap;border-radius:999px;max-width:100%;overflow:hidden;text-overflow:ellipsis;
+       padding:1px 7px;color:#fff;background:var(--kirmizi);
+       box-shadow:0 0 0 1px color-mix(in srgb, var(--kirmizi) 45%, transparent), 0 0 10px color-mix(in srgb, var(--kirmizi) 55%, transparent)}
+  .blok .br.odev{background:var(--deniz);box-shadow:0 0 0 1px color-mix(in srgb, var(--deniz) 45%, transparent), 0 0 10px color-mix(in srgb, var(--deniz) 55%, transparent)}
+  .blok .br.not{background:var(--yesil);box-shadow:0 0 0 1px color-mix(in srgb, var(--yesil) 45%, transparent), 0 0 10px color-mix(in srgb, var(--yesil) 55%, transparent)}
+  @media (prefers-reduced-motion: no-preference){ .blok .br{animation:parla 2.6s ease-in-out infinite} }
+  @keyframes parla{0%,100%{filter:brightness(1)}50%{filter:brightness(1.22)}}
+  .haftaCipler{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 8px}
+  .haftaCip{font-size:11.5px;border-radius:999px;padding:2px 9px;border:1px solid var(--cizgi);background:var(--yuzey)}
+  .haftaCip.tatil{border-color:var(--yesil);color:var(--yesil)}
+  .haftaCip.sınav{border-color:var(--kirmizi);color:var(--kirmizi)}
+  .haftaCip.başvuru{border-color:var(--bakir);color:var(--bakir)}
+  .haftaCip.kayıt{border-color:var(--deniz);color:var(--deniz)}
+  .sutun.bugun .blok{border-left-color:var(--bakir)}
+  .simdiCizgi{position:absolute;left:0;right:0;border-top:2px solid var(--bakir);z-index:3}
+  .simdiCizgi::before{content:"";position:absolute;left:-3px;top:-4px;width:6px;height:6px;border-radius:50%;background:var(--bakir)}
+
+  /* ders kartları */
+  .dersKart{padding:13px;border-bottom:1px solid var(--cizgi)}
+  .dersKart:last-child{border-bottom:none}
+  .dersKart .ustSatir{display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}
+  .dersKart .kod2{font-size:15px;font-weight:600}
+  .dersKart .ad2{color:var(--soluk);font-size:12.5px;flex:1;min-width:0}
+  .dersKart .bilgi{display:flex;flex-wrap:wrap;gap:5px;margin-top:7px}
+  .bd{font-size:11px;border:1px solid var(--cizgi);border-radius:6px;padding:1px 7px;color:var(--soluk);white-space:nowrap}
+  .bd.vurgu{border-color:var(--bakir);color:var(--bakir)}
+  .dersKart .tanim{font-size:12.5px;color:var(--soluk);margin-top:7px}
+  .dersKart .tanim a{color:var(--deniz)}
+  .dersKart .baglanti{display:flex;gap:12px;flex-wrap:wrap;margin-top:8px;font-size:12px}
+  .dersKart .baglanti a{color:var(--deniz);text-decoration:none}
+  .dersKart .baglanti a:hover{text-decoration:underline}
+  .katil{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:6px;font-size:12.5px}
+  .katil a{background:var(--deniz);color:#fff;text-decoration:none;padding:3px 10px;border-radius:999px;font-weight:600}
+  .katil span{color:var(--soluk)}
+  .katil b{font-family:'IBM Plex Mono',monospace;color:var(--murekkep)}
+
+  /* liste satırları */
+  .satir{display:flex;gap:9px;padding:11px 13px;border-bottom:1px solid var(--cizgi);align-items:flex-start}
+  .satir:last-child{border-bottom:none}
+  .satir .ic{flex:1;min-width:0}
+  .satir a{color:inherit;text-decoration:none}
+  .satir a:hover{text-decoration:underline}
+  .satir .ust2,.gn .ust2{font-size:11.5px;color:var(--soluk);display:flex;gap:8px;flex-wrap:wrap}
+  .satir .baslik,.gn .baslik{font-weight:600;font-size:13.5px;margin:1px 0 2px}
+  .satir .ozet,.gn .ozet{font-size:12.5px;color:var(--soluk)}
+  .etiket{font-size:10.5px;border:1px solid var(--cizgi);border-radius:999px;padding:1px 8px;color:var(--soluk);white-space:nowrap}
+  .not{display:flex;justify-content:space-between;gap:10px;padding:10px 13px;border-bottom:1px solid var(--cizgi);font-size:13.5px}
+  .not>span{min-width:0;overflow-wrap:anywhere}
+  .not .deger{text-align:right;flex:0 1 auto}
+  .not:last-child{border-bottom:none}
+  .not .deger{font-family:var(--mono);font-weight:500}
+
+  /* Sor (yapay zekâya soru) */
+  .sor{display:flex;gap:6px;padding:10px}
+  .sor input{flex:1;min-width:0;font:inherit;font-size:15px;padding:9px 12px;border:1px solid var(--cizgi);
+       border-radius:10px;background:var(--kagit);color:var(--murekkep)}
+  .sor button{font:inherit;font-weight:600;padding:0 14px;border:none;border-radius:10px;
+       background:var(--bakir);color:#fff;cursor:pointer}
+  .sor button:disabled{opacity:.5;cursor:default}
+  .sorCipler{padding:0 10px 10px;margin:0}
+  .cevap{padding:0 13px 12px;font-size:14px;line-height:1.5;white-space:pre-wrap}
+  .cevap .soru{color:var(--soluk);font-size:12.5px;margin-bottom:4px}
+  .cevap.hata{color:var(--kirmizi)}
+
+  /* takvim */
+  .cipler{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 9px}
+  .cip{font-size:12px;border:1px solid var(--cizgi);background:var(--yuzey);color:var(--soluk);
+       border-radius:999px;padding:4px 11px;cursor:pointer;font-family:inherit}
+  .cip[aria-pressed="true"]{border-color:var(--bakir);color:var(--bakir);
+       background:color-mix(in srgb,var(--bakir) 10%,var(--yuzey));font-weight:600}
+  .ay{padding:7px 13px;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--soluk);
+      background:color-mix(in srgb,var(--murekkep) 4%,transparent);border-bottom:1px solid var(--cizgi);font-weight:600}
+  .olay{display:grid;grid-template-columns:82px 1fr auto;gap:9px;padding:10px 13px;border-bottom:1px solid var(--cizgi);
+        align-items:baseline;font-size:12.5px}
+  .olay:last-child{border-bottom:none}
+  .olay.gecmis{opacity:.45}
+  .olay .tar{font-family:var(--mono);font-size:11px;color:var(--deniz);font-variant-numeric:tabular-nums}
+  .olay .baslik2{min-width:0;overflow-wrap:anywhere}
+  .olay .kalan{font-family:var(--mono);font-size:11px;color:var(--soluk);white-space:nowrap}
+  .olay.yakin .kalan{color:var(--bakir);font-weight:600}
+  .olay .tur{font-size:10px;letter-spacing:.04em;text-transform:uppercase;color:var(--soluk);margin-left:5px}
+  .olay.t-sınav{border-left:3px solid var(--kirmizi)}
+  .olay.t-kayıt{border-left:3px solid var(--deniz)}
+  .olay.t-başvuru{border-left:3px solid var(--bakir)}
+  .olay.t-tatil{border-left:3px solid var(--yesil)}
+  .olay.t-ödev{border-left:3px solid var(--violet,var(--deniz))}
+  .olay .tahmin{font-size:11px;color:var(--soluk)}
+
+  /* ben */
+  .puan{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--cizgi);border-radius:12px;overflow:hidden}
+  .puan div{background:var(--yuzey);padding:11px 13px}
+  .puan .v{font-family:var(--baslik);font-size:21px;font-variant-numeric:tabular-nums;line-height:1.1}
+  .puan .l{font-size:11px;color:var(--soluk);margin-top:2px}
+  .puan .v.iyi{color:var(--yesil)} .puan .v.eksik{color:var(--bakir)}
+  .olcek{height:7px;border-radius:4px;background:color-mix(in srgb,var(--murekkep) 10%,transparent);
+         margin:11px 13px 4px;overflow:hidden}
+  .olcek i{display:block;height:100%;background:var(--bakir)}
+  .aciklama{padding:0 13px 12px;font-size:12.5px;color:var(--soluk)}
+  .aciklama b{color:var(--murekkep);font-weight:600}
+  .baglantilar{display:flex;gap:14px;flex-wrap:wrap;padding:13px;font-size:13px}
+  .baglantilar a{color:var(--deniz)}
+  /* ders detay penceresi */
+  .perdeKap{position:fixed;inset:0;z-index:60;display:flex;align-items:flex-end;justify-content:center;
+       background:rgba(10,14,20,.55);backdrop-filter:blur(2px);padding:0}
+  @media (min-width:700px){ .perdeKap{align-items:center;padding:24px} }
+  .pencere{background:var(--yuzey);border:1px solid var(--cizgi);border-radius:16px 16px 0 0;width:100%;
+       max-width:560px;max-height:86vh;overflow:auto;box-shadow:0 -6px 30px rgba(0,0,0,.35);
+       padding-bottom:env(safe-area-inset-bottom,0px)}
+  @media (min-width:700px){ .pencere{border-radius:16px} }
+  .pencere .tut{width:38px;height:4px;border-radius:2px;background:var(--cizgi);margin:8px auto 0}
+  .pencere .pbas{display:flex;gap:10px;align-items:flex-start;padding:12px 14px 0}
+  .pencere .pbas .kod2{font-size:17px;font-weight:600}
+  .pencere .pbas .ad2{color:var(--soluk);font-size:12.5px}
+  .pencere .kapat{margin-left:auto;background:none;border:none;color:var(--soluk);font-size:20px;cursor:pointer;
+       line-height:1;padding:2px 6px;font-family:inherit}
+  .tiklanir{cursor:pointer}
+  .blok.tiklanir:hover,.ders.tiklanir:hover,.dersKart.tiklanir:hover{background:color-mix(in srgb,var(--deniz) 8%,var(--yuzey))}
+  [hidden]{display:none!important}
+  /* ana sayfa: kartlar (widget) */
+  .selam{margin:14px 2px 10px}
+  .selam b{display:block;font-family:var(--baslik);font-size:23px;letter-spacing:-.01em;line-height:1.2}
+  .selam span{font-size:12.5px;color:var(--soluk)}
+  .sor.hizli{padding:0;margin:0 0 10px}
+  .izgara{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .w{grid-column:1/-1;background:var(--yuzey);border:1px solid var(--cizgi);border-radius:14px;box-shadow:var(--golge);
+     overflow:hidden;min-width:0}
+  .w.yarim{grid-column:auto}
+  .w.yarim.acik{grid-column:1/-1}
+  .wb{display:flex;align-items:center;gap:7px;padding:10px 12px 0;min-height:26px}
+  .w.acilir .wb{cursor:pointer;user-select:none}
+  .wb h3{margin:0;font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:var(--soluk);font-weight:600;
+     flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .wb .wi{font-size:14px;line-height:1}
+  .wb .wsag{font-size:11px;color:var(--soluk);font-family:var(--mono);white-space:nowrap}
+  .ok{background:none;border:1px solid var(--cizgi);border-radius:999px;width:26px;height:26px;color:var(--soluk);
+     cursor:pointer;display:grid;place-items:center;padding:0;flex:0 0 auto;font-size:14px;line-height:1;transition:transform .2s}
+  .w.acik .ok{transform:rotate(180deg);color:var(--bakir);border-color:var(--bakir)}
+  .wg{padding:8px 12px 12px}
+  .wg.sifir{padding:2px 0 0}
+  .we{border-top:1px solid var(--cizgi)}
+  .wlink{display:block;width:100%;text-align:left;padding:10px 13px;font:inherit;font-size:12.5px;color:var(--deniz);
+     background:none;border:none;border-top:1px solid var(--cizgi);cursor:pointer;text-decoration:none}
+  .buyuk{font-family:var(--mono);font-size:28px;line-height:1.05;color:var(--bakir);font-variant-numeric:tabular-nums}
+  .kucuk{font-size:12px;color:var(--soluk);margin-top:4px}
+  .menuSatir{font-size:13px;line-height:1.35;margin-top:3px}
+  /* gündem notları: dokununca açılır */
+  details.gn{border-bottom:1px solid var(--cizgi)}
+  details.gn:last-child{border-bottom:none}
+  details.gn summary{list-style:none;display:flex;gap:9px;align-items:flex-start;padding:11px 13px;cursor:pointer}
+  details.gn summary::-webkit-details-marker{display:none}
+  details.gn summary .ic{flex:1;min-width:0}
+  details.gn summary::after{content:"⌄";color:var(--soluk);font-size:14px;line-height:1.3;transition:transform .2s}
+  details.gn[open] summary::after{transform:rotate(180deg)}
+  details.gn .govde{padding:0 13px 12px;font-size:13px;line-height:1.5}
+  .baglar{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+  .bag{font-size:12px;border:1px solid var(--deniz);color:var(--deniz);border-radius:999px;padding:3px 10px;text-decoration:none}
+  /* Sor: sohbet */
+  .sohbetBas{display:flex;align-items:center;justify-content:space-between;gap:8px}
+  .sohbet{display:flex;flex-direction:column;gap:10px;padding:4px 0 12px;min-height:35vh}
+  .mesaj{max-width:88%;padding:9px 12px;border-radius:14px;font-size:14px;line-height:1.5;white-space:pre-wrap;overflow-wrap:anywhere}
+  .mesaj.ben{align-self:flex-end;background:var(--bakir);color:#fff;border-bottom-right-radius:4px}
+  .mesaj.o{align-self:flex-start;background:var(--yuzey);border:1px solid var(--cizgi);border-bottom-left-radius:4px}
+  .mesaj.o a{color:var(--deniz)}
+  .mesaj.hata{color:var(--kirmizi)}
+  .sor.yapiskan{position:sticky;bottom:calc(var(--cubuk) + env(safe-area-inset-bottom,0px) + 8px);z-index:20;
+     background:var(--yuzey);border:1px solid var(--cizgi);border-radius:14px;box-shadow:var(--golge)}
+  @media (min-width:700px){ .sor.yapiskan{bottom:12px} }
+  footer{margin-top:22px;padding-top:10px;border-top:1px solid var(--cizgi);color:var(--soluk);font-size:11.5px}
+  a:focus-visible,button:focus-visible{outline:2px solid var(--bakir);outline-offset:2px;border-radius:6px}
+  #s-etkinlik label{display:grid;gap:5px;font-size:13px}
+  #s-etkinlik input,#s-etkinlik textarea{padding:10px;border:1px solid var(--cizgi);border-radius:8px;background:var(--kagit);color:var(--murekkep);font:inherit}
+  #s-etkinlik input::placeholder,#s-etkinlik textarea::placeholder{color:var(--soluk)}
+  #s-etkinlik form button{justify-self:start;padding:8px 16px}
+</style>
+
+<div class="kap">
+  <header class="ust">
+    <h1>İTÜ</h1>
+    <span class="kimlik" id="kimlik"></span>
+    <span class="sp"></span>
+    <span class="agno" id="ozet"></span>
+  </header>
+
+  <nav class="sekmeler" id="sekmeler" role="tablist"></nav>
+
+  <main>
+    <section id="s-bugun" role="tabpanel">
+      <div class="selam"><b id="selamGun"></b><span id="selamAlt"></span></div>
+      <form class="sor hizli" id="hizliSor" hidden>
+        <input id="hizliGirdi" type="text" placeholder="Bir şey sor: yarın ne var?" autocomplete="off" enterkeyhint="send">
+        <button type="submit">Sor</button>
+      </form>
+      <div class="izgara" id="widgetlar"></div>
+    </section>
+
+    <section id="s-gundem" role="tabpanel" hidden>
+      <h2>Gündem <span class="say" id="gundemSay"></span></h2>
+      <div class="cipler" id="gundemFiltre"></div>
+      <div class="kart" id="gundemListe"></div>
+      <h2>Dosyalar <span class="say" id="dosyaSay"></span></h2>
+      <div class="kart" id="dosyaListe"></div>
+      <h2>Ninova duyuruları</h2>
+      <div class="kart" id="akis"></div>
+      <h2>Bölüm duyuruları</h2>
+      <div class="kart" id="duyurular"></div>
+      <div class="bos" id="kopruDurum"></div>
+    </section>
+
+    <section id="s-etkinlik" role="tabpanel" hidden>
+      <h2>Etkinlikler & fırsatlar</h2>
+      <div class="kart" id="etkinlikTakvim"></div>
+      <h2>Takip ettiğim kaynaklar</h2>
+      <p class="kucuk">Web siteleri bakım sırasında en fazla günde bir kontrol edilir. Instagram hesapları için paylaşım bağlantısı veya duyuru metni ekle. Yeni içerik değerlendirilmeden takvime girmez.</p>
+      <form id="etkinlikKaynakForm" class="kart" style="padding:12px;display:grid;gap:8px">
+        <label>Kaynak adı <input name="ad" maxlength="100" placeholder="Örn. İTÜ kulübü" style="width:100%;box-sizing:border-box"></label>
+        <label>Web adresi veya Instagram hesabı <input name="url" required maxlength="2000" placeholder="https://… veya @hesap" style="width:100%;box-sizing:border-box"></label>
+        <button type="submit" class="cip">Kaynak ekle</button>
+      </form>
+      <div id="etkinlikKaynaklar" class="kart" style="margin-top:10px"></div>
+      <h2>Bir duyuru ekle</h2>
+      <form id="etkinlikAdayForm" class="kart" style="padding:12px;display:grid;gap:8px">
+        <label>Paylaşım bağlantısı <input name="url" type="url" placeholder="https://…" style="width:100%;box-sizing:border-box"></label>
+        <label>Duyuru metni <textarea name="metin" maxlength="12000" rows="4" placeholder="Tarih, yer ve başvuru bilgisini buraya yapıştırabilirsin." style="width:100%;box-sizing:border-box"></textarea></label>
+        <button type="submit" class="cip">Değerlendirmeye ekle</button>
+      </form>
+      <p id="etkinlikMesaj" role="status" class="kucuk" aria-live="polite"></p>
+      <h2>Değerlendirme bekleyenler</h2>
+      <div id="etkinlikAdaylar" class="kart"></div>
+    </section>
+
+    <section id="s-sor" role="tabpanel" hidden>
+      <div class="sohbetBas"><h2>Sor <span class="say">panel verinle sohbet</span></h2>
+        <button class="cip" id="yeniSohbet" type="button">Yeni sohbet</button></div>
+      <div class="sohbet" id="sohbet" aria-live="polite"></div>
+      <div class="cipler sorCipler" id="sorCipler"></div>
+      <form class="sor yapiskan" id="sorForm">
+        <input id="sorGirdi" type="text" placeholder="Sor ya da devam et…" autocomplete="off" enterkeyhint="send">
+        <button id="sorDugme" type="submit">Gönder</button>
+      </form>
+      <div class="bos" id="sorYok" hidden>Sorunu yaz; panel özetinle birlikte kopyalanır, yapay zekâ sohbetine yapıştırırsın.</div>
+    </section>
+
+    <section id="s-hafta" role="tabpanel" hidden>
+      <div class="haftaNav">
+        <button id="haftaGeri" aria-label="Önceki hafta">‹</button>
+        <div class="haftaBilgi"><b id="haftaBaslik"></b><span id="haftaAlt"></span></div>
+        <button id="haftaIleri" aria-label="Sonraki hafta">›</button>
+        <button id="haftaBugun" class="cip">Bu hafta</button>
+      </div>
+      <div class="cipler" id="haftaCipler"></div>
+      <div class="haftaKutu"><div class="hafta" id="hafta"></div></div>
+      <div class="bos" id="saatsiz" hidden></div>
+      <div class="cipler" id="dersCipler" style="margin-top:10px"></div>
+      <div class="kart" id="haftaOlaylar" style="margin-top:10px"></div>
+      <h2>Bu dönem <span class="say" id="donemSay"></span></h2>
+      <div class="kart" id="donemOzet"></div>
+    </section>
+
+    <section id="s-takvim" role="tabpanel" hidden>
+      <h2>Sınavlarım <span class="say" id="sinavSay"></span></h2>
+      <div class="kart" id="sinavlarim"></div>
+      <h2>Yaklaşanlar</h2>
+      <div class="kart" id="yaklasan"></div>
+      <h2>Yıl takvimi <span class="say" id="takvimSay"></span></h2>
+      <div class="cipler" id="filtreler"></div>
+      <div class="kart" id="yilTakvimi"></div>
+      <h2>Sınav takvimi</h2>
+      <div class="kart" id="sinav"></div>
+    </section>
+
+    <section id="s-ben" role="tabpanel" hidden>
+      <h2>Durumum <span class="say" id="kimlikBen"></span></h2>
+      <div class="puan" id="durum"></div>
+      <div id="erasmusBolum" hidden>
+        <h2>Erasmus hedefi <span class="say" id="erasmusSay"></span></h2>
+        <div class="kart" id="erasmus"></div>
+      </div>
+      <h2>Notlar <span class="say" id="notSay"></span></h2>
+      <div class="kart" id="notlar"></div>
+      <h2>Not simülasyonu <span class="say">bu dönem ne alırsam ne olur?</span></h2>
+      <div class="kart" id="simulasyon"></div>
+      <div id="devamBolum" hidden>
+        <h2>Devam durumu <span class="say">sınır: ders %70, lab %80</span></h2>
+        <div class="kart" id="devam"></div>
+      </div>
+      <h2>Kampüs <span class="say">yemek kartı, kota</span></h2>
+      <div class="puan" id="hesap" hidden></div>
+      <h2>Yemek saatleri</h2>
+      <div class="kart" id="yemekSaat"></div>
+      <h2>Yemek fiyatları</h2>
+      <div class="kart" id="yemekFiyat"></div>
+      <div class="bos" id="menuNot"></div>
+      <h2>Kayıt bilgileri</h2>
+      <div class="kart" id="kayitBilgi"></div>
+      <h2>Bağlantılar</h2>
+      <div class="kart"><div class="baglantilar">
+        <a href="https://obs.itu.edu.tr/ogrenci" target="_blank" rel="noopener">OBS</a>
+        <a href="https://ninova.itu.edu.tr" target="_blank" rel="noopener">Ninova</a>
+        <a href="https://portal.itu.edu.tr" target="_blank" rel="noopener">Portal</a>
+        <a href="https://outlook.office.com" target="_blank" rel="noopener">İTÜ mail</a>
+        <a href="https://www.sis.itu.edu.tr/TR/duyurular/duyurular.php" target="_blank" rel="noopener">Öğrenci İşleri</a>
+        <a id="lnkArac" href="/" hidden>Ders seçme aracı</a>
+      </div></div>
+      <footer id="zaman"></footer>
+    </section>
+  </main>
+</div>
+
+<script>
+const V = __VERI__;
+const GUNLER = ["Pazartesi","Salı","Çarşamba","Perşembe","Cuma","Cumartesi","Pazar"];
+const KISA = ["Pzt","Sal","Çar","Per","Cum","Cmt","Paz"];
+const AY = ["Ocak","Şubat","Mart","Nisan","Mayıs","Haziran","Temmuz","Ağustos","Eylül","Ekim","Kasım","Aralık"];
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const ss = d => String(Math.floor(d/60)).padStart(2,"0") + ":" + String(d%60).padStart(2,"0");
+const fmt = n => n == null ? "—" : Number(n).toFixed(2).replace(".", ",");
+const obs = V.obs || {}, dersler = obs.dersler || [], detay = V.dersDetay || {};
+const bosTanim = t => !t || /has not yet been entered/i.test(t);
+// her derse sabit bir renk: kodun özetinden paletten seçilir
+const PALET = ["#2563eb","#ea580c","#16a34a","#db2777","#0891b2","#ca8a04","#7c3aed","#dc2626","#65a30d","#92400e","#06b6d4","#c026d3"];
+const RENK_HARITA = {};                       // aynı renk iki derse düşmesin: sıraya göre dağıt
+[...new Set((V.obs?.dersler || []).map(d => d.kod))].sort().forEach((kod, i) => { RENK_HARITA[kod] = PALET[i % PALET.length]; });
+const renkOf = kod => RENK_HARITA[kod] || (() => { let h = 0; for (const c of String(kod)) h = (h*31 + c.charCodeAt(0)) >>> 0; return PALET[h % PALET.length]; })();
+const uzaktanMi = kod => /Sanal|Uzaktan|Çevrimiçi/i.test(String((V.dersDetay||{})[kod]?.yontem || ""));
+// OBS'de boş kalan bilgiler: değerlendirme ajanının gruplardan/Ninova'dan bulduğu (notlar.json "dersler")
+const EK = kod => ((V.whatsapp || {}).dersler || {})[kod] || {};
+Object.entries((V.whatsapp || {}).dersler || {}).forEach(([kod, e]) => {
+  if (e.hoca && !(detay[kod] || {}).hoca) detay[kod] = {...(detay[kod] || {}), hoca: e.hoca};
+});
+const yerYazi = s => s.sinif || s.mekan || EK(s.kod).yer || (uzaktanMi(s.kod) ? "Uzaktan (çevrimiçi)" : "sınıf açıklanmadı");
+// OBS'de dersliği olmayan dersler (fizik lab gibi): o tarihteki olaydan yer ("L2 F4" = FEB'deki lab sınıfı).
+// Programı belli olup o gün deneyi olmayan haftalar "deney yok" olarak işaretlenir.
+const LAB_YER = /\bL\d\s*-?\s*F\d\b/i;
+function gunlukYer(s, tarih){
+  const liste = ((V.whatsapp || {}).olaylar || []).filter(x => x.ders === s.kod && x.bas && (x.yer || LAB_YER.test(x.konu || "")));
+  if (!liste.length || !tarih) return {yer: yerYazi(s), yok: false};
+  const o = liste.find(x => new Date(x.bas).toDateString() === tarih.toDateString());
+  if (o && o.yer) return {yer: o.yer, yok: false};
+  if (o) return {yer: o.konu.match(LAB_YER)[0].replace(/\s*-?\s*F/i, " F").toUpperCase() + " (lab sınıfı)", yok: false};
+  const ilk = new Date(Math.min(...liste.map(x => +new Date(x.bas)))), son = new Date(Math.max(...liste.map(x => +new Date(x.bas))));
+  return (tarih >= new Date(ilk.toDateString()) && tarih <= son) ? {yer: "bu hafta deneyin yok", yok: true} : {yer: yerYazi(s), yok: false};
+}
+const sonrakiTarih = s => { const t = new Date(bugun); t.setDate(t.getDate() + ((s.gun - bugunIdx + 7) % 7)); return t; };
+const haritaUrl = s => s.bina ? "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent("İTÜ " + (s.kampus || "Ayazağa") + " " + s.bina) : null;
+// online dersler: Ninova duyurusundaki en yeni Teams/Zoom linki ve takım kodu
+const ninDuyuru = (V.ninova || {}).duyurular || [];
+const katilHTML = crn => {
+  const l = (ninDuyuru.find(x => x.crn === crn && x.toplanti) || {}).toplanti;
+  const k = (ninDuyuru.find(x => x.crn === crn && x.takimKodu) || {}).takimKodu;
+  return l || k ? `<div class="katil">${l ? `<a href="${esc(l)}" target="_blank" rel="noopener">🎥 Derse katıl</a>` : ""}${k ? `<span>Teams kodu <b>${esc(k)}</b></span>` : ""}</div>` : "";
+};
+
+const saatler = [];
+dersler.forEach(d => (d.saatler||[]).forEach(s => saatler.push({...s, kod:d.kod, ad:d.ad, crn:d.crn})));
+saatler.sort((a,b) => a.gun-b.gun || a.bas-b.bas);
+
+const simdi = new Date();
+const bugunIdx = (simdi.getDay()+6)%7;
+const dk = simdi.getHours()*60 + simdi.getMinutes();
+const gun = 864e5, bugun = new Date(simdi.getFullYear(), simdi.getMonth(), simdi.getDate());
+
+// ============================================================ sekmeler
+const SEKMELER = [["bugun","Bugün","☀"],["hafta","Hafta","▦"],["gundem","Gündem","📣"],["takvim","Takvim","🗓"],["sor","Sor","💬"],["ben","Ben","👤"]];
+const nav = document.getElementById("sekmeler");
+nav.innerHTML = SEKMELER.map(([id,ad,ik]) =>
+  `<button role="tab" data-sekme="${id}" aria-selected="false"><span class="ikon">${ik}</span>${ad}</button>`).join("");
+function sekmeAc(id, kaydet=true){
+  if(!SEKMELER.some(s => s[0] === id)) id = "bugun";
+  SEKMELER.forEach(([s]) => { document.getElementById("s-"+s).hidden = s !== id; });
+  nav.querySelectorAll("button").forEach(b => b.setAttribute("aria-selected", b.dataset.sekme === id));
+  if(kaydet){ try{ localStorage.setItem("panel-sekme", id); }catch(e){} history.replaceState(null,"","#"+id); }
+  window.scrollTo({top: id === "sor" ? document.body.scrollHeight : 0});
+}
+nav.addEventListener("click", e => { const b = e.target.closest("button"); if(b) sekmeAc(b.dataset.sekme); });
+
+// ============================================================ üst bilgi
+document.getElementById("kimlik").textContent = [obs.ogrenci?.program, obs.ogrenci?.no].filter(Boolean).join(" · ");
+const ad = obs.akademikDurum || {};
+document.getElementById("ozet").textContent =
+  [ad.sinifSeviye, ad.genelNotOrtalamasi ? "AGNO " + fmt(ad.genelNotOrtalamasi) : null].filter(Boolean).join(" · ");
+
+// ============================================================ açılır kart (widget): ok tuşuna / başlığa basınca genişler
+let ACIK = {};
+try { ACIK = JSON.parse(localStorage.getItem("panel-acik") || "{}"); } catch(e) {}
+function widget({id, baslik, ikon, sag = "", govde, ek = "", alt = "", yarim = false, sifir = false}){
+  const acik = !!(ek && ACIK[id]);
+  return `<section class="w${yarim ? " yarim" : ""}${ek ? " acilir" : ""}${acik ? " acik" : ""}" data-w="${id}">
+    <header class="wb"><span class="wi">${ikon}</span><h3>${baslik}</h3>${sag ? `<span class="wsag">${sag}</span>` : ""}
+      ${ek ? `<button class="ok" type="button" aria-expanded="${acik}" aria-label="Genişlet">⌄</button>` : ""}</header>
+    <div class="wg${sifir ? " sifir" : ""}">${govde}</div>
+    ${ek ? `<div class="we"${acik ? "" : " hidden"}>${ek}</div>` : ""}${alt}</section>`;
+}
+document.addEventListener("click", e => {
+  const bas = e.target.closest(".w.acilir .wb");
+  if (!bas || e.target.closest("a")) return;
+  const w = bas.parentElement, ek = w.querySelector(".we"), acik = ek.hidden;
+  ek.hidden = !acik; w.classList.toggle("acik", acik);
+  w.querySelector(".ok").setAttribute("aria-expanded", acik);
+  ACIK[w.dataset.w] = acik;
+  try { localStorage.setItem("panel-acik", JSON.stringify(ACIK)); } catch(e) {}
+});
+document.addEventListener("click", e => { const b = e.target.closest("[data-git]"); if (b){ e.preventDefault(); sekmeAc(b.dataset.git); } });
+
+// ============================================================ Bugün: dersler
+const bugunDers = saatler.filter(s => s.gun === bugunIdx);
+const suanki = bugunDers.find(s => dk >= s.bas && dk <= s.bit);
+const sirada = bugunDers.find(s => s.bas > dk) ||
+  saatler.find(s => s.gun > bugunIdx) || saatler[0];
+const siradakiHTML = () => {
+  const s = suanki || sirada;
+  if (!s) return `<div class="bos">Kayıtlı dersin yok.</div>`;
+  const d = detay[s.kod] || {};
+  const nerede = s.gun === bugunIdx ? (suanki ? "şu an" : "bugün") : (s.gun === (bugunIdx+1)%7 ? "yarın" : GUNLER[s.gun]);
+  const kalan = s.gun === bugunIdx && !suanki ? `${Math.floor((s.bas-dk)/60) ? Math.floor((s.bas-dk)/60)+" sa " : ""}${(s.bas-dk)%60} dk sonra` : "";
+  return `<div class="siradaki tiklanir" data-kod="${esc(s.kod)}">
+    <div class="zaman">${ss(s.bas)}<span>${nerede}${kalan ? " · " + kalan : ""}</span></div>
+    <div>
+      <div class="kod"><span class="nokta" style="background:${renkOf(s.kod)}"></span>${esc(s.kod)}</div>
+      <div class="ad">${esc(s.ad)}</div>
+      <div class="yer"><b>${esc(gunlukYer(s, sonrakiTarih(s)).yer)}</b>${s.bina ? ` · <a href="${esc(haritaUrl(s))}" target="_blank" rel="noopener">${esc(s.bina)} 📍</a>` : ""}</div>
+      ${d.hoca ? `<div class="ad">👤 ${esc(d.hoca)}</div>` : ""}
+      ${katilHTML(s.crn)}
+    </div></div>`;
+};
+const bugunListeHTML = () => bugunDers.map(s => {
+  const suan = dk >= s.bas && dk <= s.bit, d = detay[s.kod] || {};
+  return `<div class="ders tiklanir${suan?" simdi":""}" data-kod="${esc(s.kod)}">
+    <div class="saat">${ss(s.bas)}<span>${ss(s.bit)}</span></div>
+    <div><div class="kod"><span class="nokta" style="background:${renkOf(s.kod)}"></span>${esc(s.kod)} ${suan?'<span class="rozet">şu an</span>':""}</div>
+      <div class="ad">${esc(s.ad)}${d.hoca ? " · " + esc(d.hoca) : ""}</div>
+      <div class="yer"><b>${esc(gunlukYer(s, sonrakiTarih(s)).yer)}</b>${s.bina ? ` · <a href="${esc(haritaUrl(s))}" target="_blank" rel="noopener">${esc(s.bina)} 📍</a>` : ""}</div>
+      ${katilHTML(s.crn)}
+    </div></div>`;
+}).join("");
+
+// ============================================================ bilgi kanalları: Ninova, bölüm siteleri, WhatsApp grupları, e-posta
+const nin = V.ninova || {}, nodev = nin.odevler || [];
+const hav = V.havuzDuyurulari || {};
+const trTarih = s => {        // "30 Eylül 2026 22:57" ya da "30.09.2026" -> Date
+  const m = String(s || "").match(/(\d{1,2})[ .](\S+?)[ .](\d{4})(?:\s+(\d{1,2}):(\d{2}))?/);
+  if (!m) return null;
+  const a = /^\d+$/.test(m[2]) ? Number(m[2]) - 1 : AY.findIndex(x => x.toLocaleLowerCase("tr") === m[2].toLocaleLowerCase("tr"));
+  return a < 0 ? null : new Date(+m[3], a, +m[1], +(m[4] || 0), +(m[5] || 0));
+};
+const nduyuru = [...(nin.duyurular || [])].sort((a, b) => (trTarih(b.tarih) || 0) - (trTarih(a.tarih) || 0));
+const duyuruHTML = d => `<div class="satir"><span class="etiket">${esc((d.ders||"Ninova").split(" - ")[0])}</span><div class="ic">
+    <a href="${esc(d.url)}" target="_blank" rel="noopener"><div class="baslik">${esc(d.baslik)}</div></a>
+    ${d.ozet ? `<div class="ozet">${esc(d.ozet)}</div>` : ""}
+    <div class="ust2"><span>${esc(d.tarih||"")}</span>${d.kimden?`<span>${esc(d.kimden)}</span>`:""}</div></div></div>`;
+const odevHTML = o => `<div class="satir"><span class="etiket">ödev</span><div class="ic">
+    <a href="${esc(o.url)}" target="_blank" rel="noopener"><div class="baslik">${esc(Object.values(o.alanlar||{})[0] || "Ödev")}</div></a>
+    <div class="ust2">${Object.values(o.alanlar||{}).slice(1).map(v=>`<span>${esc(v)}</span>`).join("")}</div></div></div>`;
+const bolumHTML = (k, d) => `<div class="satir"><span class="etiket">${esc(k)}</span><div class="ic">
+    <a href="${esc(d.url)}" target="_blank" rel="noopener"><div class="baslik">${esc(d.baslik)}</div></a></div></div>`;
+
+// Yapay zekânın WhatsApp gruplarından ve e-postadan çıkardığı notlar (öğrenci mesajı = teyit yok)
+const WA = V.whatsapp || null;
+const TEYIT = {ninova: ["✓ teyitli", "yesil"], resmi: ["✓ resmî", "yesil"], yok: ["⚠ söylenti", "bakir"], celiski: ["✗ çelişkili", "kirmizi"]};
+const NOTLAR = [...((WA || {}).notlar || [])].sort((a, b) => (a.onem||3) - (b.onem||3) || String(b.tarih).localeCompare(String(a.tarih)));
+function notHTML(n){
+  const [ty, renk] = TEYIT[n.teyit] || TEYIT.yok;
+  const t = n.tarih ? new Date(n.tarih) : null;
+  const baglar = (n.link ? `<a class="bag" href="${esc(n.link)}" target="_blank" rel="noopener">Kaynağı aç ↗</a>` : "")
+    + (n.dosyaLink ? `<a class="bag" href="${esc(n.dosyaLink)}" target="_blank" rel="noopener">📎 Drive'da aç</a>` : "")
+    + (n.ders && dersler.some(d => d.kod === n.ders) ? `<a class="bag" href="#" data-kod="${esc(n.ders)}">${esc(n.ders)} dersi</a>` : "");
+  return `<details class="gn"><summary><span class="etiket" style="color:var(--${renk});border-color:var(--${renk})">${ty}</span>
+    <div class="ic"><div class="baslik">${(n.onem||3) === 1 ? "❗ " : ""}${esc(n.baslik)}</div>
+      <div class="ust2">${n.ders ? `<span>${esc(n.ders)}</span>` : ""}<span>${esc(n.kategori||"")}</span>
+        ${t ? `<span>${t.getDate()} ${AY[t.getMonth()].slice(0,3)}</span>` : ""}<span>${esc(n.grup||"")}</span></div></div></summary>
+    <div class="govde">${esc(n.metin)}
+      ${n.teyitNot ? `<div class="ozet" style="font-style:italic;margin-top:6px">${esc(n.teyitNot)}</div>` : ""}
+      ${baglar ? `<div class="baglar">${baglar}</div>` : ""}</div></details>`;
+}
+
+// dosyalar: gruplardan inenler (Drive linkiyle) + Ninova sınıf dosyaları
+const DOSYALAR = [
+  ...((WA || {}).dosyalar || []).map(d => ({ad: d.ad, nerede: d.grup, tarih: new Date(d.tarih), url: d.link, kaynak: d.tur === "video" ? "video" : "Drive"})),
+  ...(nin.siniflar || []).flatMap(s => (s.dosyalar || []).map(f => ({ad: f.ad, nerede: (s.ders||"").split(" - ")[0] + " · Ninova",
+      tarih: trTarih(f.tarih), url: f.url, kaynak: "Ninova"}))),
+].filter(d => d.tarih && !isNaN(d.tarih)).sort((a, b) => b.tarih - a.tarih);
+const dosyaHTML = d => `<div class="satir"><span class="etiket">${esc(d.kaynak)}</span><div class="ic">
+    ${d.url ? `<a href="${esc(d.url)}" target="_blank" rel="noopener"><div class="baslik">${esc(d.ad)}</div></a>` : `<div class="baslik">${esc(d.ad)}</div>`}
+    <div class="ust2"><span>${esc(d.nerede)}</span><span>${d.tarih.getDate()} ${AY[d.tarih.getMonth()].slice(0,3)}</span></div></div></div>`;
+
+// ---- Gündem sekmesi
+const GFILTRE = [["hepsi","Hepsi", () => true], ["onemli","Önemli", n => (n.onem||3) === 1], ["ders","Dersler", n => !!n.ders],
+  ["burs","Burs & yurt", n => /burs|yurt|kyk|harç|kredi/i.test(`${n.kategori} ${n.baslik}`)],
+  ["is","İş & fırsat", n => /iş|staj|fırsat/i.test(n.kategori || "")], ["etkinlik","Etkinlik", n => /etkinlik/i.test(n.kategori || "")]];
+let gfiltre = "hepsi";
+function gundemCiz(){
+  const f = GFILTRE.find(x => x[0] === gfiltre)[2];
+  document.getElementById("gundemFiltre").innerHTML = GFILTRE.map(([k, ad, fn]) =>
+    `<button class="cip" data-gf="${k}" aria-pressed="${k === gfiltre}">${ad} <span style="opacity:.6">${NOTLAR.filter(fn).length}</span></button>`).join("");
+  document.getElementById("gundemListe").innerHTML = NOTLAR.filter(f).map(notHTML).join("") || `<div class="bos">Bu başlıkta not yok.</div>`;
+}
+document.getElementById("gundemFiltre").addEventListener("click", e => {
+  const b = e.target.closest("[data-gf]"); if (b){ gfiltre = b.dataset.gf; gundemCiz(); } });
+gundemCiz();
+document.getElementById("gundemSay").textContent = NOTLAR.length ? `${NOTLAR.length} not · gruplar + e-posta` : "";
+document.getElementById("dosyaSay").textContent = DOSYALAR.length ? `${DOSYALAR.length} dosya` : "";
+document.getElementById("dosyaListe").innerHTML = (DOSYALAR.slice(0, 40).map(dosyaHTML).join("") || `<div class="bos">Henüz dosya yok.</div>`)
+  + (WA?.klasorLink ? `<a class="wlink" href="${esc(WA.klasorLink)}" target="_blank" rel="noopener">📁 Drive'daki "İTÜ WhatsApp Dosyaları" klasörü ↗</a>` : "");
+document.getElementById("akis").innerHTML = (nodev.map(odevHTML).join("") + nduyuru.map(duyuruHTML).join("")) || `<div class="bos">Yeni duyuru yok.</div>`;
+if (WA){
+  const k = WA.kopru || {};
+  document.getElementById("kopruDurum").textContent = `WhatsApp köprüsü ${k.bagli ? "bağlı" : "bağlı değil"} · ${k.dinlenen || 0} grup dinleniyor`
+    + (k.sonMesaj ? ` · son mesaj ${new Date(k.sonMesaj).toLocaleString("tr-TR", {day:"numeric", month:"short", hour:"2-digit", minute:"2-digit"})}` : "")
+    + ". Notlar Gemini’ye /degerlendir dediğinde güncellenir; mesajların kendisi panele girmez, sadece yapay zekânın özetleri.";
+}
+
+// ============================================================ Hafta (oklarla tüm yıl)
+const PX = 0.5;
+const BAS = saatler.length ? Math.floor(Math.min(8*60, ...saatler.map(s=>s.bas))/60)*60 : 8*60;
+const BIT = saatler.length ? Math.ceil(Math.max(18*60, ...saatler.map(s=>s.bit))/60)*60 : 18*60;
+const YUK = (BIT-BAS)*PX;
+let cizgiler = "";
+for(let d=BAS; d<=BIT; d+=30) cizgiler += `<div class="cizgi${d%60?" yarim":""}" style="top:${(d-BAS)*PX}px"></div>`;
+
+const DERS_GUNLERI = (() => { const g = [0,1,2,3,4].filter(x => saatler.some(s => s.gun === x)); return g.length >= 2 ? g : [0,1,2,3,4]; })();
+const pazartesi = d => { const x = new Date(d); x.setHours(0,0,0,0); x.setDate(x.getDate() - ((x.getDay()+6)%7)); return x; };
+const gunEkle = (d,n) => { const x = new Date(d); x.setDate(x.getDate()+n); return x; };
+const ayKisa = d => `${d.getDate()} ${AY[d.getMonth()].slice(0,3)}`;
+// cumartesi-pazar "bu hafta" = gelecek hafta (ders günleri bitti)
+const buHafta = () => gunEkle(pazartesi(simdi), bugunIdx >= 5 ? 7 : 0);
+let gosterilen = buHafta();
+
+// dönem sınırları akademik takvimden: ders dönemi içinde dersler, dışında sadece olaylar
+function donemBilgisi(){
+  const bul = re => (V.akademikTakvim || []).find(x => re.test(x.olay || "") && /Lisans \/ Önlisans/.test(x.tablo || ""));
+  const guz = bul(/Güz Yarıyılı Başlangıcı/), bahar = bul(/Bahar Yarıyılı Başlangıcı/);
+  const final = bul(/Güz Yarıyılı Sonu Sınavları/);
+  return {
+    guzBas: guz ? new Date(guz.bas) : null,
+    guzSon: final ? new Date(final.bas) : (bahar ? new Date(bahar.bas) : null),
+    baharBas: bahar ? new Date(bahar.bas) : null,
+  };
+}
+const donem = donemBilgisi();
+
+
+// bir ders bloğuna o hafta düşen olaylar (quiz, ödev, sınav) — blokta rozet olarak görünür
+// haftalık programdaki rozet için kısa ad (tamamı rozetin üstünde ve ders penceresinde)
+function kisaEtiket(t){
+  const n = (re) => (t.match(re) || [])[1];
+  if (/demo/i.test(t)) return "Demo Q";
+  if (/deney|exp\d|exp /i.test(t)) return "D" + (n(/(?:deney|exp(?:eriment)?)\s*(\d+)/i) || "") + (/quiz|kuiz/i.test(t) ? "+Q" : "");
+  if (/quiz|kuiz/i.test(t)) return "Q" + (n(/(?:quiz|kuiz)\s*(\d+)/i) || "");
+  if (/vize|midterm|ara sınav/i.test(t)) return "Vize";
+  if (/final/i.test(t)) return "Final";
+  if (/ödev|teslim|homework|hw/i.test(t)) return "Ödev";
+  if (/not|sonuç/i.test(t)) return "Not";
+  return t.split(/\s+/)[0].slice(0, 6);
+}
+function blokOlaylari(s, gunIdx, gunler, haftaOlaylari){
+  const gun = gunler[gunIdx];
+  const out = [];
+  for (const o of haftaOlaylari){
+    const kod = o.dersKodu || (o.olay || "").match(/^([A-Z]{2,4}\s\d{3,4}[A-Z]*)/)?.[1];
+    if (!kod || kod !== s.kod) continue;
+    const b = new Date(o.bas), bt = new Date(o.bit || o.bas);
+    const gunBas = new Date(b.getFullYear(), b.getMonth(), b.getDate());
+    const gunBit = new Date(bt.getFullYear(), bt.getMonth(), bt.getDate());
+    if (gun < gunBas || gun > gunBit) continue;
+    // aralığa yayılan olay (quiz haftası): dersin o haftaki ilk dersine yaz
+    const dersGunleri = gunler.map((g, i) => ({g, i})).filter(({g, i}) =>
+      saatler.some(x => x.kod === s.kod && x.gun === DERS_GUNLERI[i]) && g >= gunBas && g <= gunBit);
+    const cokGunlu = gunBit > gunBas;
+    if (cokGunlu && dersGunleri.length && dersGunleri[0].i !== gunIdx) continue;
+    if (cokGunlu && saatler.filter(x => x.kod === s.kod && x.gun === DERS_GUNLERI[gunIdx])[0] !== s) continue;
+    if (o.dersSaati != null && o.dersSaati !== s.bas) continue;
+    const etiket = kisaEtiket((o.olay || "").replace(kod, "").split("—")[0].trim() || o.tur);
+    out.push({etiket, tam: (o.olay || "").slice(0, 90),
+              sinif: /ödev|teslim/i.test(o.tur + etiket) ? "odev" : /not|sonuç/i.test(etiket) ? "not" : "sinav"});
+  }
+  return out.slice(0, 2);
+}
+
+function haftaCiz(){
+  const bas = gosterilen, son = gunEkle(bas, 6);
+  const gunler = DERS_GUNLERI.map(i => gunEkle(bas, i));
+  const bugunGun = gunler.findIndex(g => g.toDateString() === bugun.toDateString());
+
+  // bu haftaya düşen takvim olayları
+  const haftaOlaylari = (olaylar || []).filter(o => {
+    if (!o.bas || !banaUygun(o)) return false;
+    const b = new Date(o.bas), s = new Date(o.bit || o.bas);
+    return b <= son && s >= bas;
+  });
+  const tatilGunleri = new Set();
+  haftaOlaylari.filter(o => o.tur === "tatil").forEach(o => {
+    const b = new Date(o.bas), s = new Date(o.bit || o.bas);
+    gunler.forEach((g, i) => { if (g >= new Date(b.toDateString()) && g <= new Date(s.toDateString())) tatilGunleri.add(i); });
+  });
+
+  const derslerVar = donem.guzBas && donem.guzSon && son >= donem.guzBas && bas < donem.guzSon;
+  const haftaNo = donem.guzBas ? Math.floor((bas - pazartesi(donem.guzBas)) / (7*864e5)) + 1 : null;
+
+  document.getElementById("haftaBaslik").textContent = `${ayKisa(bas)} – ${ayKisa(son)}`;
+  document.getElementById("haftaAlt").textContent =
+    derslerVar ? `Güz ${haftaNo}. hafta · ${ss(BAS)}–${ss(BIT)}`
+    : (donem.baharBas && bas >= pazartesi(donem.baharBas)) ? "Bahar dönemi — ders programın henüz belli değil"
+    : (donem.guzSon && bas >= donem.guzSon) ? "Ders dönemi bitti" : "Ders dönemi başlamadı";
+
+  const genel = haftaOlaylari.filter(o => !o.dersKodu && !/^[A-Z]{2,4}\s\d{3,4}/.test(o.olay || ""));
+  document.getElementById("haftaCipler").innerHTML = genel.length
+    ? genel.slice(0, 6).map(o => `<span class="haftaCip ${esc(o.tur||"")}">${esc(tarihYazi(o))} · ${esc((o.olay||"").slice(0,42))}</span>`).join("")
+    : "";
+  const hafta = document.getElementById("hafta");
+  hafta.style.gridTemplateColumns = `${innerWidth <= 560 ? 30 : 40}px repeat(${gunler.length}, minmax(0, 1fr))`;
+  hafta.innerHTML =
+    `<div class="gunBaslik"></div>` +
+    gunler.map((g,i) => `<div class="gunBaslik${i===bugunGun?" bugun":""}${tatilGunleri.has(i)?" tatil":""}">
+        ${KISA[DERS_GUNLERI[i]]}<br><span style="font-weight:400">${g.getDate()}</span></div>`).join("") +
+    `<div class="saatler" style="height:${YUK}px">` +
+      Array.from({length:(BIT-BAS)/60+1}, (_,i) => `<div class="et" style="top:${i*60*PX}px">${ss(BAS+i*60)}</div>`).join("") +
+    `</div>` +
+    gunler.map((g,i) => {
+      const tatil = tatilGunleri.has(i);
+      const gunNo = DERS_GUNLERI[i];
+      const bloklar = (derslerVar && !tatil) ? saatler.filter(s => s.gun===gunNo).map(s => {
+        const h = (s.bit-s.bas)*PX - 2;
+        const rozet = blokOlaylari(s, i, gunler, haftaOlaylari);
+        const gy = gunlukYer(s, g);
+        return `<div class="blok tiklanir${h<46?" kisa":""}" data-kod="${esc(s.kod)}"
+          style="${gy.yok ? "opacity:.45;" : ""}top:${(s.bas-BAS)*PX}px;height:${h}px;border-left-color:${renkOf(s.kod)};
+                 background:color-mix(in srgb, ${renkOf(s.kod)} 12%, var(--yuzey))"
+          title="${esc(s.kod)} ${ss(s.bas)}–${ss(s.bit)} · ${esc(gy.yer)}${rozet.length ? " · " + rozet.map(x=>x.tam).join(" · ") : ""}">
+          <b>${esc(s.kod)}</b><span class="s">${ss(s.bas)}–${ss(s.bit)}</span>
+          <span class="m">${esc(gy.yer)}</span>
+          ${rozet.length ? `<span class="rozetler">${rozet.map(x=>`<span class="br ${esc(x.sinif)}">${esc(x.etiket)}</span>`).join("")}</span>` : ""}
+        </div>`;
+      }).join("") : "";
+      const ciz = (i===bugunGun && dk>BAS && dk<BIT) ? `<div class="simdiCizgi" style="top:${(dk-BAS)*PX}px"></div>` : "";
+      return `<div class="sutun${i===bugunGun?" bugun":""}${tatil?" tatil":""}" style="height:${YUK}px">${cizgiler}${bloklar}${ciz}</div>`;
+    }).join("");
+
+  // haftanın olayları (sınav, tatil, son tarih, ödev)
+  const kutu = document.getElementById("haftaOlaylar");
+  const odevler = ((V.ninova||{}).odevler || []).map(o => {
+    const metin = Object.values(o.alanlar||{}).join(" ");
+    const m = metin.match(/(\d{2})[./](\d{2})[./](\d{4})/);
+    if (!m) return null;
+    const t = new Date(`${m[3]}-${m[2]}-${m[1]}T23:59`);
+    return (t >= bas && t <= son) ? {olay: "Ödev teslimi: " + Object.values(o.alanlar||{})[0], bas: t.toISOString(),
+                                     tur: "sınav", url: o.url, kaynak: "lisans", tablo: "Ninova"} : null;
+  }).filter(Boolean);
+  const hepsi = [...odevler, ...haftaOlaylari].sort((a,b) => String(a.bas).localeCompare(String(b.bas)));
+  kutu.innerHTML = hepsi.length
+    ? `<div class="ay">Bu hafta ${hepsi.length} şey var</div>` + hepsi.map(olayHtml).join("")
+    : `<div class="bos">Bu hafta takvimde özel bir şey yok.</div>`;
+}
+document.getElementById("haftaGeri").onclick = () => { gosterilen = gunEkle(gosterilen, -7); haftaCiz(); };
+document.getElementById("haftaIleri").onclick = () => { gosterilen = gunEkle(gosterilen, 7); haftaCiz(); };
+document.getElementById("haftaBugun").onclick = () => { gosterilen = buHafta(); haftaCiz(); };
+document.addEventListener("keydown", e => {
+  if (document.getElementById("s-hafta").hidden) return;
+  if (e.key === "ArrowLeft"){ gosterilen = gunEkle(gosterilen, -7); haftaCiz(); }
+  if (e.key === "ArrowRight"){ gosterilen = gunEkle(gosterilen, 7); haftaCiz(); }
+});
+
+const saatsiz = dersler.filter(d => !(d.saatler||[]).length);
+if (saatsiz.length){
+  const el = document.getElementById("saatsiz");
+  el.hidden = false;
+  el.textContent = "Takvimde saati olmayan dersler: " + saatsiz.map(d => `${d.kod} (CRN ${d.crn})`).join(", ");
+}
+const toplamKredi = dersler.reduce((t,d) => t + (detay[d.kod]?.kredi || 0), 0);
+const toplamAkts = dersler.reduce((t,d) => t + (parseFloat(String(detay[d.kod]?.akts||"0").replace(",","."))||0), 0);
+document.getElementById("donemSay").textContent = `${dersler.length} ders`;
+document.getElementById("donemOzet").innerHTML = `
+  <div class="not"><span>Toplam kredi</span><span class="deger">${fmt(toplamKredi)}</span></div>
+  <div class="not"><span>Toplam AKTS</span><span class="deger">${fmt(toplamAkts)}</span></div>
+  <div class="not"><span>Haftalık ders saati</span><span class="deger">${Math.round(saatler.reduce((t,s)=>t+(s.bit-s.bas+1)/60,0))} sa</span></div>
+  <div class="not"><span>Boş günlerin</span><span class="deger">${[0,1,2,3,4].filter(g=>!saatler.some(s=>s.gun===g)).map(g=>KISA[g]).join(", ")||"yok"}</span></div>`;
+
+// ============================================================ Dersler
+const kaynaklar = kod => {
+  const l = ((V.ayarlar || {}).dersKaynaklari || {})[kod] || [];
+  return l.length ? `<div class="tanim">📎 ${l.map(k => k.url ? `<a href="${esc(k.url)}" target="_blank" rel="noopener">${esc(k.ad)}</a>` : esc(k.ad)).join(" · ")}</div>` : "";
+};
+function dersGovdesi(d, basliksiz){
+  const x = detay[d.kod] || {}, n = x.notDagilimi;
+  const saat = (d.saatler||[]).map(s => `${KISA[s.gun]} ${ss(s.bas)}–${ss(s.bit)} · <b>${esc(yerYazi({...s, kod:d.kod}))}</b>${s.bina ? ` · <a href="${esc(haritaUrl(s))}" target="_blank" rel="noopener">${esc(s.bina)} 📍</a>` : ""}`).join("<br>") || d.yerZaman || "saat yok";
+  return `${basliksiz ? "" : `<div class="ustSatir"><span class="kod2"><span class="nokta" style="background:${renkOf(d.kod)}"></span>${esc(d.kod)}</span><span class="ad2">${esc(d.ad)}</span></div>`}
+    <div class="bilgi">
+      <span class="bd">CRN ${esc(d.crn)}</span>
+      ${x.kategoriNot ? `<span class="bd">${esc(x.kategoriNot)}${x.turAdi ? " · " + esc(x.turAdi) : ""}</span>` : ""}
+      ${x.kredi != null ? `<span class="bd">${fmt(x.kredi)} kr · ${esc(x.akts)} AKTS</span>` : ""}
+      ${x.hoca ? `<span class="bd vurgu">👤 ${esc(x.hoca)}</span>` : ""}
+      ${x.yontem ? `<span class="bd">${esc(String(x.yontem).replace(/\s*\(.*$/,""))}</span>` : ""}
+      ${n ? `<span class="bd">${esc(n.donem)}: AA %${n.aa} · ort ${fmt(n.ort)} · kalma %${n.kalma}</span>` : ""}
+    </div>
+    <div class="tanim">🕘 ${saat}</div>
+    ${EK(d.kod).notu ? `<div class="tanim">📌 ${esc(EK(d.kod).notu)}${EK(d.kod).teyit === "yok" ? " <i>(söylenti)</i>" : ""}</div>` : ""}
+    ${bosTanim(x.tanim) ? "" : `<div class="tanim">📘 ${esc(x.tanim)}</div>`}
+    ${katilHTML(d.crn)}
+    ${kaynaklar(d.kod)}
+    <div class="baglanti">
+      ${x.ninovaUrl ? `<a href="${esc(x.ninovaUrl)}" target="_blank" rel="noopener">Ninova</a>` : ""}
+      <a href="${esc(x.obsUrl)}" target="_blank" rel="noopener">Ders bilgisi</a>
+      <a href="${esc(x.notUrl)}" target="_blank" rel="noopener">Not dağılımı</a>
+    </div>`;
+}
+// Hafta sekmesinde ders çipleri: saati olmayan dersler dahil, tıklayınca ders bilgisi
+document.getElementById("dersCipler").innerHTML = dersler.map(d =>
+  `<button class="cip" data-kod="${esc(d.kod)}"><span class="nokta" style="background:${renkOf(d.kod)}"></span>${esc(d.kod)}</button>`).join("");
+
+// ---- ders detay penceresi (haftalık programda, bugün listesinde ve ders kartlarında tıklanınca)
+function dersAc(kod){
+  const d = dersler.find(x => x.kod === kod);
+  if (!d) return;
+  const y = d.yoklama, sinir = /L$/.test(d.kod) ? 80 : 70;
+  const dersNotlari = [...(obs.harfNotlari||[]), ...(obs.donemIciNotlar||[])]
+    .filter(n => `${n.bransKodu||""} ${n.dersKodu||""}`.trim() === kod);
+  const duyurulari = (V.ninova?.duyurular || []).filter(x => x.crn === d.crn || (x.ders||"").startsWith(kod));
+  const perde = document.createElement("div");
+  perde.className = "perdeKap";
+  perde.innerHTML = `<div class="pencere" role="dialog" aria-modal="true" aria-label="${esc(kod)}">
+    <div class="tut"></div>
+    <div class="pbas"><div><div class="kod2"><span class="nokta" style="background:${renkOf(kod)}"></span>${esc(kod)}</div><div class="ad2">${esc(d.ad)}</div></div>
+      <button class="kapat" aria-label="Kapat">✕</button></div>
+    ${(() => { const y = olaylar.filter(o => o.dersKodu === kod && o.bas && !bitti(o)).slice(0, 5);
+        return y.length ? `<div class="ay">Yaklaşanlar</div>` + y.map(olayHtml).join("") : ""; })()}
+    <div class="dersKart" style="border-bottom:none">${dersGovdesi(d, true)}</div>
+    ${y && y.toplam ? `<div class="not"><span>Devam</span><span class="deger" style="color:var(--${(y.oran??0)>=sinir?"yesil":"kirmizi"})">%${y.oran} · ${y.katildi}/${y.toplam}</span></div>` : ""}
+    ${dersNotlari.map(n => `<div class="not"><span>${esc(n.notTipiAdi||n.aciklama||"Not")}</span>
+        <span class="deger">${esc(n.harfNotu||n.notu||n.not||n.puan||"")}</span></div>`).join("")}
+    ${(() => {
+      const sinif = ((V.ninova||{}).siniflar || []).find(x => (x.ders||"").startsWith(kod)) || {};
+      const gorulenQ = new Set();
+      const quizler = [...(V.izlenceler||[]), ...((V.ninova||{}).izlenceSinavlari||[])].filter(x => {
+        if (x.ders !== kod) return false;
+        const k = `${x.tur}|${x.bas}`; if (gorulenQ.has(k)) return false; gorulenQ.add(k); return true; });
+      const panolar = (sinif.mesajPanosu || []).filter(m => (m.linkler||[]).length || m.baslik);
+      const dosyalar = sinif.dosyalar || [];
+      const bilgi = (V.izlenceBilgi || {})[kod];
+      return (bilgi && (bilgi.agirliklar||[]).length ? `<div class="ay">Not ağırlıkları (izlence)</div>
+          <div class="not"><span>${bilgi.agirliklar.map(esc).join(" · ")}</span>
+            <span class="deger"><a href="${esc(bilgi.url)}" target="_blank" rel="noopener">izlence</a></span></div>
+          ${bilgi.vfKurali ? `<div class="aciklama" style="padding:8px 13px">⚠ ${esc(bilgi.vfKurali)}</div>` : ""}` : "")
+        + (quizler.length ? `<div class="ay">Quiz / sınav takvimi (izlence)</div>` + quizler.map(q =>
+          `<div class="not"><span>${esc(q.tur)} <span class="ozet">${esc(q.konu||"")}</span></span>
+            <span class="deger">${esc(q.hafta)}. hafta · ${esc(q.bas.slice(8,10))}–${esc(q.bit.slice(8,10))}.${esc(q.bit.slice(5,7))}</span></div>`).join("") : "")
+        + (dosyalar.length ? `<div class="ay">Ders dosyaları</div>` + dosyalar.map(d =>
+          `<div class="not"><span><a href="${esc(d.url)}" target="_blank" rel="noopener">${esc(d.ad)}</a>
+            <span class="ozet">${esc(d.nerede)} · ${esc(d.tarih||"")}</span></span>
+            <span class="deger">${esc(d.boyut||"")}</span></div>`).join("") : "")
+        + (panolar.length ? `<div class="ay">Mesaj panosu</div>` + panolar.map(m =>
+          `<div class="satir"><div class="ic"><div class="baslik">${esc(m.baslik)}</div>
+            <div class="ust2">${esc(m.bilgi||"")}</div>
+            ${(m.linkler||[]).map(l => `<div><a href="${esc(l)}" target="_blank" rel="noopener">${esc(l.slice(0,60))}…</a></div>`).join("")}
+          </div></div>`).join("") : "");
+    })()}
+    ${(() => { const g = ((V.whatsapp||{}).notlar || []).filter(n => n.ders === kod);
+        return g.length ? `<div class="ay">Gruplardan ve e-postadan</div>` + g.map(notHTML).join("") : ""; })()}
+    ${duyurulari.length ? `<div class="ay">Ninova duyuruları</div>` + duyurulari.map(x => `<div class="satir"><div class="ic">
+        <a href="${esc(x.url)}" target="_blank" rel="noopener"><div class="baslik">${esc(x.baslik)}</div></a>
+        <div class="ust2"><span>${esc(x.tarih||"")}</span>${x.kimden?`<span>${esc(x.kimden)}</span>`:""}</div></div></div>`).join("") : ""}
+  </div>`;
+  const kapat = () => { perde.remove(); document.removeEventListener("keydown", esc2); };
+  const esc2 = e => { if (e.key === "Escape") kapat(); };
+  perde.addEventListener("click", e => { if (e.target === perde) kapat(); });
+  perde.querySelector(".kapat").onclick = kapat;
+  document.addEventListener("keydown", esc2);
+  document.body.appendChild(perde);
+}
+document.addEventListener("click", e => {
+  const a = e.target.closest("a");
+  if (a && !a.dataset.kod) return;
+  const el = e.target.closest("[data-kod]");
+  if (el){ e.preventDefault(); dersAc(el.dataset.kod); }
+});
+
+
+// Haftaya yayılan ders olayını (quiz vb.) o haftaki gerçek ders saatine sabitler
+function dersGunuNetlestir(o){
+  if (!o.dersKodu || !o.bas) return o;
+  const b = new Date(o.bas), e = new Date(o.bit || o.bas);
+  if (e - b < 864e5) return o;                                  // zaten tek güne bağlı
+  const dersSaatleri = saatler.filter(s => s.kod === o.dersKodu);
+  if (!dersSaatleri.length) return o;
+  for (let d = new Date(b.getFullYear(), b.getMonth(), b.getDate()); d <= e; d.setDate(d.getDate() + 1)){
+    const gi = (d.getDay() + 6) % 7;
+    const dersler = dersSaatleri.filter(s => s.gun === gi).sort((x, y) => x.bas - y.bas);
+    if (!dersler.length) continue;
+    const ilk = dersler[0];
+    const t = new Date(d); t.setHours(Math.floor(ilk.bas / 60), ilk.bas % 60, 0, 0);
+    const iki = n => String(n).padStart(2, "0");
+    return {...o, bas: `${t.getFullYear()}-${iki(t.getMonth()+1)}-${iki(t.getDate())}T${iki(t.getHours())}:${iki(t.getMinutes())}`,
+            bit: null, dersSaati: ilk.bas, haftaAraligi: `${ayKisa(b)} – ${ayKisa(e)} haftası`};
+  }
+  return o;
+}
+
+// ============================================================ Takvim
+const lisansTablo = t => /Lisans \/ Önlisans|İngilizce Hazırlık/.test(t || "");
+const olaylar = [
+  ...(V.akademikTakvim || []).map(x => ({...x, kaynak: lisansTablo(x.tablo) ? "lisans" : "diğer"})),
+  ...(V.onemliTarihler || []).map(x => ({...x, kaynak: "lisans", tablo: "Kendi eklediklerim"})),
+  ...(V.ninova?.dersBilgisiTarihleri || []).map(x => ({olay:`${x.ders}: ${x.metin}`, tur:"sınav", kaynak:"lisans",
+        tablo:"Ninova ders bilgisi", url:x.url, bas:null, tarihMetni:"izlencede yazıyor"})),
+  // izlencelerdeki (syllabus) quiz ve sınav takvimi
+  ...(() => {   // aynı quiz hem bölüm sitesinden hem Ninova'daki izlenceden gelebiliyor
+      const hepsi = [...(V.izlenceler || []), ...((V.ninova||{}).izlenceSinavlari || [])];
+      const gorulen = new Set();
+      return hepsi.filter(x => { const k = `${x.ders}|${x.tur}|${x.bas}`; if (gorulen.has(k)) return false; gorulen.add(k); return true; });
+    })().map(x => ({
+        olay: `${x.ders} ${x.tur}${x.konu ? " — " + x.konu : ""}`,
+        tur: "sınav", kaynak: "lisans", tablo: "İzlence", url: x.kaynak,
+        bas: x.bas + "T09:00", bit: x.bit ? x.bit + "T23:59" : null, dersKodu: x.ders, hafta: x.hafta})),
+  // WhatsApp/Ninova'dan çıkarılan kişisel olaylar (ör. lab deney programı)
+  ...((V.whatsapp||{}).olaylar || []).map(x => ({
+        olay: `${x.ders ? x.ders + " " : ""}${x.tur}${x.konu ? " — " + x.konu : ""}`,
+        tur: x.olayTuru || "sınav", kaynak: "lisans", url: x.url, bas: x.bas, bit: x.bit || null, dersKodu: x.ders || null,
+        tablo: x.teyit === "yok" ? "WhatsApp grubu (teyit yok)" : "Ninova (gruplardan bulundu)"})),
+  // hocaların Ninova duyurularında geçen sınav/quiz/ödev tarihleri
+  ...(V.ninova?.sinavTarihleri || []).map(x => ({
+        olay: `${(x.ders||"").split(" - ")[0]} ${x.tur}${x.saat ? " · " + x.saat : ""} — ${x.baglam}`,
+        tur: /ödev|teslim|proje|sunum|homework|deadline/i.test(x.tur) ? "ödev" : "sınav",
+        kaynak: "lisans", tablo: "Ninova duyurusu", url: x.url,
+        bas: x.tarih + "T" + (x.saat || "09:00"), dersKodu: (x.ders||"").split(" - ")[0]})),
+].filter(x => x.bas || x.tarihMetni);
+const olaylarHam = olaylar.splice(0, olaylar.length).map(dersGunuNetlestir);
+olaylar.push(...olaylarHam);
+olaylar.sort((a,b) => String(a.bas||"9").localeCompare(String(b.bas||"9")));
+
+const benimSinif = parseInt(String(ad.sinifSeviye || "1").match(/\d/)?.[0] || "1", 10);
+const ILGISIZ = new RegExp(["lisansüstü","yüksek lisans","doktora","tezsiz","enstitü","yatay geçiş","dikey geçiş",
+  "çift anadal","çap\\b","yandal","intibak","uolp","kktc","konservatuar","önlisans","masterbee","mikrokredi",
+  "bitirme (tasarım )?projesi","mezuniyet","azami süre","son sınıf","2\\. öğretim","yabancı uyruklu"].join("|"), "i");
+function banaUygun(o){
+  const t = o.olay || "";
+  if (o.tur === "idari" || o.kaynak !== "lisans") return false;
+  if (o.tablo === "Kendi eklediklerim" || o.tablo === "Ninova ders bilgisi") return true;
+  if (/hazırlık/i.test(o.tablo||"") && !/yeterli/i.test(t)) return false;
+  if (ILGISIZ.test(t)) return false;
+  if (((V.ayarlar||{}).takvimGizle || []).some(g => t.includes(g))) return false;
+  const m = t.match(/(\d)\.\s*sınıf/i);
+  return !(m && Number(m[1]) !== benimSinif);
+}
+const bitti = o => new Date(o.bit || o.bas || 0) < bugun;
+const gunFarki = t => { const d = new Date(t); return Math.round((new Date(d.getFullYear(), d.getMonth(), d.getDate()) - bugun)/gun); };
+const kalanGun = o => gunFarki(o.bas);
+function kalanYazi(o){
+  if (!o.bas) return "";
+  const k = kalanGun(o), s = o.bit ? gunFarki(o.bit) : k;
+  if (k > 0) return k === 1 ? "yarın" : k + " gün";
+  if (k === 0 && !o.bit) return "bugün";
+  return s >= 0 ? "sürüyor" : "";
+}
+const tarihYazi = o => {
+  if (!o.bas) return o.tarihMetni || "";
+  if (o.dersSaati != null){ const d = new Date(o.bas);
+    return `${KISA[(d.getDay()+6)%7]} ${d.getDate()} ${AY[d.getMonth()].slice(0,3)} ${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")}`; }
+  const b = new Date(o.bas), s = o.bit && new Date(o.bit);
+  const g = d => `${d.getDate()} ${AY[d.getMonth()].slice(0,3)}`;
+  return s && (s-b > gun) ? `${g(b)} – ${g(s)}` : g(b);
+};
+const olayHtml = o => `<div class="olay t-${esc(o.tur||"diğer")}${bitti(o)?" gecmis":""}${o.bas&&kalanGun(o)>=0&&kalanGun(o)<=14?" yakin":""}">
+  <span class="tar">${esc(tarihYazi(o))}</span>
+  <span class="baslik2">${o.url ? `<a href="${esc(o.url)}" target="_blank" rel="noopener">${esc(o.olay)}</a>` : esc(o.olay)}
+    ${o.kesin === false ? `<span class="tahmin">· tahmini</span>` : ""}<span class="tur">${esc(o.tur||"")}</span></span>
+  <span class="kalan">${esc(kalanYazi(o))}</span></div>`;
+
+let turFiltre = "hepsi", gecmisiGoster = false, sadeceBana = true;
+const TURLER = [["hepsi","Hepsi"],["sınav","Sınav"],["kayıt","Kayıt"],["başvuru","Başvuru"],["tatil","Tatil"]];
+const filtreKutu = document.getElementById("filtreler");
+filtreKutu.innerHTML = TURLER.map(([v,l]) => `<button class="cip" data-tur="${v}" aria-pressed="${v==="hepsi"}">${l}</button>`).join("")
+  + `<button class="cip" data-bana aria-pressed="true">Bana uygun</button>`
+  + `<button class="cip" data-gecmis aria-pressed="false">Geçmiş</button>`;
+function takvimCiz(){
+  const liste = olaylar.filter(o => (!sadeceBana || banaUygun(o)) &&
+    (turFiltre === "hepsi" || o.tur === turFiltre) && (gecmisiGoster || !bitti(o)));
+  document.getElementById("takvimSay").textContent = `${liste.length} madde`;
+  let html = "", ay = null;
+  for (const o of liste){
+    const d = o.bas ? new Date(o.bas) : null;
+    const etiket = d ? `${AY[d.getMonth()]} ${d.getFullYear()}` : "Tarihi izlencede";
+    if (etiket !== ay){ ay = etiket; html += `<div class="ay">${esc(ay)}</div>`; }
+    html += olayHtml(o);
+  }
+  document.getElementById("yilTakvimi").innerHTML = html || `<div class="bos">Bu filtrede kayıt yok.</div>`;
+}
+filtreKutu.addEventListener("click", e => {
+  const b = e.target.closest(".cip"); if(!b) return;
+  if (b.dataset.tur){ turFiltre = b.dataset.tur; filtreKutu.querySelectorAll("[data-tur]").forEach(x => x.setAttribute("aria-pressed", x === b)); }
+  else if ("bana" in b.dataset){ sadeceBana = !sadeceBana; b.setAttribute("aria-pressed", sadeceBana); }
+  else { gecmisiGoster = !gecmisiGoster; b.setAttribute("aria-pressed", gecmisiGoster); }
+  takvimCiz();
+});
+takvimCiz();
+
+haftaCiz();   // olaylar ve banaUygun tanımlandıktan sonra
+// ---- Sınavlarım: final takvimi + hocaların duyurduğu sınav/quiz/ödev tarihleri
+(function sinavlarim(){
+  const finalim = (obs.finalTakvimim || []).map(f => ({
+    olay: `${esc(f.dersKodu || f.ders || "Final")} ${f.yer || f.derslik || ""}`.trim(),
+    tur: "sınav", kaynak: "lisans", tablo: "OBS final takvimi", bas: f.tarih || f.sinavTarihi}));
+  const liste = [...finalim, ...olaylar.filter(o => ["Ninova duyurusu","Ninova ders bilgisi","İzlence"].includes(o.tablo))]
+    .filter(o => !o.bas || !bitti(o))
+    .sort((a,b) => String(a.bas||"9").localeCompare(String(b.bas||"9")));
+  document.getElementById("sinavSay").textContent = liste.length ? `${liste.length} kayıt` : "henüz yok";
+  document.getElementById("sinavlarim").innerHTML = liste.length
+    ? liste.map(olayHtml).join("")
+    : `<div class="bos">Henüz açıklanmış sınav yok.<br>
+        <b>Finaller:</b> 1 Aralık'ta OBS'de ilan ediliyor, ilan edilince salon ve saatle burada çıkar.<br>
+        <b>Vize ve quizler:</b> merkezi bir takvimi yok, hocalar Ninova'dan duyuruyor.
+        Duyuru metinlerindeki tarihleri otomatik yakalayıp buraya ve haftalık takvime koyuyorum.</div>`;
+})();
+
+const yakinlar = olaylar.filter(o => o.bas && banaUygun(o) && !bitti(o) && kalanGun(o) <= 45).slice(0,6);
+document.getElementById("yaklasan").innerHTML = yakinlar.length ? yakinlar.map(olayHtml).join("")
+  : `<div class="bos">Önümüzdeki 45 günde takvimde bir şey yok.</div>`;
+
+const finalim = obs.finalTakvimim || [], finaller = V.finalTakvimi || [];
+document.getElementById("sinav").innerHTML =
+  (finalim.map(f => `<div class="not"><span>${esc(f.dersKodu||f.ders||"")}</span><span class="deger">${esc(f.tarih||f.sinavTarihi||"")}</span></div>`).join("")
+   + finaller.slice(0,40).map(f => { const v = Object.values(f);
+      return `<div class="not"><span>${esc(v.slice(0,2).join(" "))}</span><span class="deger">${esc(v.slice(2,4).join(" "))}</span></div>`; }).join(""))
+  || `<div class="bos">Final sınav programı henüz yayımlanmadı. 1 Aralık'ta ilan edilecek, sonra burada görünür.</div>`;
+
+// ============================================================ Kampüs (ring, menü: ana sayfada; kart, saatler, fiyatlar: Ben'de)
+const KAMPUS = V.kampus || {};
+const tablolar = (liste) => (liste || []).map(t => ({
+  baslik: (t[0] && t[0].length === 1) ? t[0][0] : "",
+  basliklar: (t[0] && t[0].length === 1) ? (t[1] || []) : (t[0] || []),
+  satirlar: (t[0] && t[0].length === 1) ? t.slice(2) : t.slice(1),
+}));
+const RING = (() => {
+  const haftaSonu = bugunIdx >= 5;
+  const bugunku = tablolar(KAMPUS.ring).filter(t => /RİNG/i.test(t.baslik))
+    .filter(t => haftaSonu ? /HAFTA SONU/i.test(t.baslik) : /HAFTA İÇİ/i.test(t.baslik));
+  const saatBul = t => t.satirlar.flat().map(h => (String(h).match(/^(\d{1,2}):(\d{2})$/) || []).slice(1))
+      .filter(m => m.length).map(m => Number(m[0])*60 + Number(m[1]));
+  const tum = [...new Set(bugunku.flatMap(saatBul))].sort((a,b) => a-b);
+  const tablo = bugunku.map(t => `<div class="ay">${esc(t.baslik)}</div>` +
+      `<div class="tanim" style="padding:8px 13px;font-size:12px;color:var(--soluk)">${esc(t.basliklar.join(" · "))}</div>` +
+      t.satirlar.filter(s => s.some(h => /\d{1,2}:\d{2}|sürekli|mola/i.test(h))).map(s =>
+        `<div class="not"><span>${esc(s[0] || "")}</span><span class="deger">${esc(s.slice(1).join(" · "))}</span></div>`).join("")).join("")
+    + `<a class="wlink" href="${esc((KAMPUS.kaynak||{}).ring || "https://sks.itu.edu.tr/kampus-ici-ring-servis")}" target="_blank" rel="noopener">Tüm ring saatleri ve duraklar ↗</a>`;
+  return {haftaSonu, sonraki: tum.filter(s => s >= dk).slice(0, 4), tablo};
+})();
+const MENU = (() => {
+  const m = KAMPUS.yemekMenusu, ogunler = (m?.ogunler) || [];
+  let secili = dk >= 14*60 ? ogunler.findIndex(o => /Akşam/.test(o.ogun)) : 0;
+  if (secili < 0) secili = 0;
+  const t = m?.tarih ? trTarih(m.tarih) : null;
+  const bugunMu = t && t.toDateString() === bugun.toDateString();
+  const kalem = x => `<div class="not"><span>${esc(x.ad)}${x.tur ? ` <span class="ozet">${esc(x.tur)}</span>` : ""}
+      ${x.alerjen?.length ? `<br><span class="ozet" style="font-size:11.5px">⚠ ${esc(x.alerjen.join(", "))}</span>` : ""}</span>
+      <span class="deger">${esc(x.gramaj || "")}${x.gramaj ? " g" : ""}</span></div>`;
+  return {ogunler, secili, bugunMu, tarih: m?.tarih || "",
+          // açılınca: o öğünün tamamı + vejetaryen menüsü (alerjenlerle)
+          tam: ogunler.filter(o => ogunler[secili] && o.ogun.split(" ")[0] === ogunler[secili].ogun.split(" ")[0])
+            .map(o => `<div class="ay">${esc(o.ogun)}</div>` + (o.kalemler || []).map(kalem).join("")).join("")};
+})();
+
+(function kampus(){
+  // --- yemek kartı bakiyesi ve internet kotası (Portal)
+  const hesap = V.hesap || {};
+  if (hesap.kart || hesap.kota){
+    const el = document.getElementById("hesap");
+    el.hidden = false;
+    const kota = hesap.kota || {}, kullanilan = parseFloat(String(kota.KotaKullanilan||"0").replace(",",".")) || 0;
+    const toplam = parseFloat(String(kota.KotaTotal||"0").replace(",",".")) || 0;
+    const sonHarcama = (hesap.kart?.hareketler||[]).find(h => parseFloat(String(h.tutar||"0").replace(",",".")) < 0);
+    el.innerHTML = `
+      <div><div class="v">${esc(hesap.kart?.bakiye ?? "—")}${hesap.kart?.bakiye ? " ₺" : ""}</div>
+           <div class="l">Yemek kartı${sonHarcama ? ` · son ${esc(sonHarcama.tutar)} ₺` : ""}</div></div>
+      <div><div class="v">${toplam ? fmt(toplam - kullanilan) : "—"}</div><div class="l">Kalan kota (GB)</div></div>
+      <div><div class="v">${toplam ? "%" + fmt(100*kullanilan/toplam) : "—"}</div><div class="l">Kota kullanımı</div></div>`;
+  }
+  const tabloHtml = (liste, vurgu) => tablolar(liste).map(t =>
+    (t.baslik ? `<div class="ay">${esc(t.baslik)}</div>` : "") +
+    t.satirlar.map(s => `<div class="not"${vurgu && vurgu.test(s[0]||"") ? ' style="background:color-mix(in srgb,var(--bakir) 8%,transparent)"' : ""}>
+        <span>${esc(s[0]||"")}</span><span class="deger">${esc(s.slice(1).filter(x=>x&&x!=="-").join(" · ") || "—")}</span></div>`).join("")
+  ).join("") || `<div class="bos">Veri alınamadı.</div>`;
+  document.getElementById("yemekSaat").innerHTML = tabloHtml(KAMPUS.yemekSaatleri, /Ayazağa/i);
+  document.getElementById("yemekFiyat").innerHTML = tabloHtml(KAMPUS.yemekFiyatlari, /^Öğrenci/i);
+  document.getElementById("menuNot").innerHTML =
+    `Günün menüsü Portal'dan, saatler ve fiyatlar <a href="https://sks.itu.edu.tr/" target="_blank" rel="noopener">sks.itu.edu.tr</a>'den her güncellemede yenileniyor.`;
+})();
+
+// ============================================================ Ana sayfa (Bugün): kartlar
+function anasayfa(){
+  const haftaNo = donem.guzBas ? Math.floor((bugun - pazartesi(donem.guzBas)) / (7*gun)) + 1 : null;
+  document.getElementById("selamGun").textContent = `${GUNLER[bugunIdx]}, ${simdi.getDate()} ${AY[simdi.getMonth()]}`;
+  const onemli = NOTLAR.filter(n => (n.onem||3) === 1).length;
+  document.getElementById("selamAlt").textContent = [
+    haftaNo >= 1 && haftaNo <= 16 ? `Güz ${haftaNo}. hafta` : "",
+    bugunDers.length ? `bugün ${bugunDers.length} ders` : "bugün ders yok",
+    onemli ? `${onemli} önemli not` : ""].filter(Boolean).join(" · ");
+
+  const w = [];
+  w.push(widget({id: "ders", ikon: "📍", baslik: suanki ? "Şu an derstesin" : "Sıradaki ders", sifir: true,
+    sag: bugunDers.length ? `bugün ${bugunDers.length}` : "", govde: siradakiHTML(), ek: bugunListeHTML()}));
+
+  const r = RING;
+  w.push(widget({id: "ring", ikon: "🚌", baslik: "Ring", yarim: true, sag: r.haftaSonu ? "h. sonu" : "",
+    govde: r.sonraki.length
+      ? `<div class="buyuk">${ss(r.sonraki[0])}</div><div class="kucuk">${r.sonraki[0]-dk <= 0 ? "şimdi kalkıyor" : (r.sonraki[0]-dk) + " dk sonra"}</div>
+         ${r.sonraki.length > 1 ? `<div class="kucuk">sonra ${r.sonraki.slice(1).map(ss).join(" · ")}</div>` : ""}`
+      : `<div class="kucuk">Bugün için kalan ring görünmüyor.</div>`,
+    ek: r.tablo}));
+
+  const m = MENU, o = m.ogunler[m.secili];
+  w.push(widget({id: "yemek", ikon: "🍽", baslik: o ? `${o.ogun} yemeği` : "Yemek", yarim: true, sag: m.bugunMu ? "" : esc(m.tarih),
+    govde: o ? (o.kalemler || []).filter(x => !/Tatlı-Salata|İçecek/i.test(x.tur || "")).slice(0, 3)
+                 .map(x => `<div class="menuSatir">${esc(x.ad)}</div>`).join("")
+             : `<div class="kucuk">Menü alınamadı.</div>`,
+    ek: m.tam}));
+
+  const yaklasan = olaylar.filter(x => x.bas && banaUygun(x) && !bitti(x) && kalanGun(x) <= 30);
+  w.push(widget({id: "yaklasan", ikon: "⏳", baslik: "Yaklaşanlar", sag: yaklasan.length ? `30 gün · ${yaklasan.length}` : "", sifir: true,
+    govde: yaklasan.slice(0, 3).map(olayHtml).join("") || `<div class="bos">Önümüzdeki 30 günde bir şey yok.</div>`,
+    ek: yaklasan.length > 3 ? yaklasan.slice(3, 20).map(olayHtml).join("") : "",
+    alt: `<button class="wlink" data-git="takvim">Tüm takvim →</button>`}));
+
+  const gundem = NOTLAR.filter(n => (n.onem||3) <= 2);
+  w.push(widget({id: "gundem", ikon: "📣", baslik: "Gündem · gruplar ve e-posta", sag: gundem.length ? String(gundem.length) : "", sifir: true,
+    govde: gundem.slice(0, 4).map(notHTML).join("") || `<div class="bos">Gruplarda ve e-postada önemli bir şey yok.</div>`,
+    ek: gundem.length > 4 ? gundem.slice(4).map(notHTML).join("") : "",
+    alt: `<button class="wlink" data-git="gundem">Tüm gündem, dosyalar ve duyurular (${NOTLAR.length} not) →</button>`}));
+
+  const yeniDosya = DOSYALAR.filter(d => bugun - d.tarih < 14*gun);
+  if (yeniDosya.length) w.push(widget({id: "dosya", ikon: "📎", baslik: "Yeni dosyalar", sag: `14 gün · ${yeniDosya.length}`, sifir: true,
+    govde: yeniDosya.slice(0, 3).map(dosyaHTML).join(""), ek: yeniDosya.length > 3 ? yeniDosya.slice(3, 15).map(dosyaHTML).join("") : "",
+    alt: WA?.klasorLink ? `<a class="wlink" href="${esc(WA.klasorLink)}" target="_blank" rel="noopener">📁 Drive klasörü ↗</a>` : ""}));
+
+  const bolum = Object.entries(hav).flatMap(([k, l]) => (l || []).slice(0, 3).map(d => bolumHTML(k, d)));
+  const tumDuyuru = [...nodev.map(odevHTML), ...nduyuru.map(duyuruHTML)];
+  w.push(widget({id: "duyuru", ikon: "🔔", baslik: "Ninova ve bölüm duyuruları", sag: nduyuru.length ? String(nduyuru.length) : "", sifir: true,
+    govde: tumDuyuru.slice(0, 2).join("") || `<div class="bos">Yeni duyuru yok.</div>`,
+    ek: [...tumDuyuru.slice(2, 10), ...bolum].join("")}));
+
+  document.getElementById("widgetlar").innerHTML = w.join("");
+}
+anasayfa();
+
+// ============================================================ Ben
+document.getElementById("kimlikBen").textContent = [obs.ogrenci?.program, obs.ogrenci?.no].filter(Boolean).join(" · ");
+document.getElementById("durum").innerHTML = `
+  <div><div class="v">${ad.genelNotOrtalamasi ? fmt(ad.genelNotOrtalamasi) : "—"}</div><div class="l">AGNO</div></div>
+  <div><div class="v">${fmt(ad.alinanKredi || toplamKredi)}</div><div class="l">${ad.alinanKredi ? "Başarılı kredi" : "Bu dönem kredi"}</div></div>
+  <div><div class="v">${esc((ad.sinifSeviye||"1. Sınıf").replace(" Sınıf",""))}</div><div class="l">Sınıf</div></div>`;
+
+(function erasmus(){
+  const a = V.ayarlar || {}, dil = a.dilPuani;
+  if (!dil) return;
+  const agno = Number(ad.genelNotOrtalamasi || 0);
+  document.getElementById("erasmusBolum").hidden = false;
+  const yuzluk = agno ? Math.min(100, 100 - (4-agno)*23.33) : null;
+  const puan = yuzluk != null ? yuzluk*0.5 + dil*0.5 : null;
+  const baraj = (a.erasmusBarajlari || []).filter(b => b.hibeBaraji).slice(-1)[0];
+  const hedef = a.hedefPuan || (baraj ? baraj.hibeBaraji : 90);
+  const gerekenAgno = (h,d) => 4 - (100 - (2*h - d))/23.33;
+  const ga = gerekenAgno(hedef, dil);
+  document.getElementById("erasmusSay").textContent = a.dilKaynagi || "";
+  document.getElementById("erasmus").innerHTML = `
+    <div class="puan">
+      <div><div class="v">${agno ? fmt(agno) : "—"}</div><div class="l">AGNO</div></div>
+      <div><div class="v">${dil}</div><div class="l">Dil puanı</div></div>
+      <div><div class="v ${puan!=null && puan>=hedef ? "iyi":"eksik"}">${puan!=null ? fmt(puan) : "—"}</div><div class="l">Başvuru puanı</div></div>
+    </div>
+    <div class="olcek"><i style="width:${Math.max(2, Math.min(100,(puan||0)/hedef*100))}%"></i></div>
+    <div class="aciklama">
+      Hedef <b>${fmt(hedef)}</b> puan${baraj ? ` · ${baraj.yil} hibe barajı ${fmt(baraj.hibeBaraji)} (${baraj.hibeli}/${baraj.yerlesen} hibeli)` : ""}.
+      Puan = AGNO'nun 100'lük karşılığı × 0,5 + dil × 0,5.<br>
+      ${ga <= 4 ? `Bu dil puanıyla gereken AGNO <b>${fmt(ga)}</b>. Dil 90 olursa <b>${fmt(gerekenAgno(hedef,90))}</b>, 95 olursa <b>${fmt(gerekenAgno(hedef,95))}</b>.`
+                : `Bu dil puanıyla 4,00 ile bile yetmiyor. Dil 90 olursa gereken AGNO <b>${fmt(gerekenAgno(hedef,90))}</b>, 95 olursa <b>${fmt(gerekenAgno(hedef,95))}</b>.`}
+      ${agno ? "" : `<br>AGNO'n henüz oluşmadı; ilk notlar girilince buraya gelir.`}
+    </div>`;
+})();
+
+const doi = obs.donemIciNotlar || [], harf = obs.harfNotlari || [];
+document.getElementById("notSay").textContent = obs.donemIciOrtalama && obs.donemIciOrtalama !== "0.00" ? "dönem ortalaması " + obs.donemIciOrtalama : "";
+document.getElementById("notlar").innerHTML =
+  (harf.map(h => `<div class="not"><span>${esc(h.bransKodu||"")} ${esc(h.dersKodu||"")} <span class="ozet">${esc(h.dersAdiTR||"")}</span></span>
+      <span class="deger">${esc(h.harfNotu||h.notu||"")}</span></div>`).join("")
+   + doi.map(n => `<div class="not"><span>${esc(n.dersKodu||n.bransKodu||"")} ${esc(n.notTipiAdi||n.aciklama||"")}</span>
+      <span class="deger">${esc(n.not ?? n.puan ?? "")}</span></div>`).join(""))
+  || `<div class="bos">Henüz açıklanmış not yok. Sınav notları girildikçe burada görünür.</div>`;
+
+// ---- not simülasyonu: bu dönemki derslere tahmini not ver, AGNO ve Erasmus puanını gör
+(function simulasyon(){
+  const HARF = {"AA":4,"BA+":3.75,"BA":3.5,"BB+":3.25,"BB":3,"CB+":2.75,"CB":2.5,"CC+":2.25,"CC":2,
+                "DC+":1.75,"DC":1.5,"DD+":1.25,"DD":1,"FF":0};
+  const kredili = dersler.filter(d => (detay[d.kod]?.kredi || 0) > 0);
+  const kutu = document.getElementById("simulasyon");
+  if (!kredili.length){ kutu.innerHTML = `<div class="bos">Kredili dersin yok.</div>`; return; }
+  const eskiKredi = Number(ad.alinanKredi || 0), eskiAgno = Number(ad.genelNotOrtalamasi || 0);
+  const secimler = {};
+  const secenekler = h => Object.keys(HARF).map(x => `<option value="${x}"${x===h?" selected":""}>${x}</option>`).join("");
+
+  kutu.innerHTML = kredili.map(d => `<div class="not">
+      <span>${esc(d.kod)} <span class="ozet">${fmt(detay[d.kod].kredi)} kredi</span></span>
+      <select data-sim="${esc(d.kod)}" style="font:inherit;background:var(--yuzey);color:var(--murekkep);
+        border:1px solid var(--cizgi);border-radius:6px;padding:3px 6px">${secenekler("BB")}</select>
+    </div>`).join("")
+    + `<div class="puan" style="border-radius:0">
+        <div><div class="v" id="simAgno">—</div><div class="l">Dönem sonu AGNO</div></div>
+        <div><div class="v" id="simKredi">—</div><div class="l">Başarılı kredi</div></div>
+        <div><div class="v" id="simErasmus">—</div><div class="l">Erasmus puanı</div></div></div>
+      <div class="aciklama" id="simNot"></div>`;
+
+  function hesapla(){
+    let agirlik = 0, kredi = 0, basarili = 0;
+    kredili.forEach(d => {
+      const h = secimler[d.kod] || "BB", k = detay[d.kod].kredi;
+      agirlik += HARF[h] * k; kredi += k;
+      if (HARF[h] >= 1) basarili += k;
+    });
+    const yeniAgno = (eskiAgno * eskiKredi + agirlik) / (eskiKredi + kredi || 1);
+    const toplamKr = eskiKredi + basarili;
+    const dil = (V.ayarlar || {}).dilPuani;
+    const puan = dil ? (Math.min(100, 100 - (4 - yeniAgno) * 23.33) * 0.5 + dil * 0.5) : null;
+    const hedef = (V.ayarlar || {}).hedefPuan || 90;
+    document.getElementById("simAgno").textContent = fmt(yeniAgno);
+    document.getElementById("simKredi").textContent = fmt(toplamKr);
+    const e = document.getElementById("simErasmus");
+    e.textContent = puan != null ? fmt(puan) : "—";
+    e.className = "v " + (puan != null && puan >= hedef ? "iyi" : "eksik");
+    const kalan = kredili.filter(d => (secimler[d.kod]||"BB") === "FF");
+    document.getElementById("simNot").innerHTML =
+      (puan != null ? `Hedef ${fmt(hedef)} puan için ${puan >= hedef ? "<b>yeterli</b>" : `<b>${fmt(hedef - puan)}</b> puan daha lazım`}. ` : "")
+      + (kalan.length ? `${kalan.length} dersten kalıyorsun, o dersleri tekrar alman gerekir. ` : "")
+      + `Kredisiz dersler ortalamaya girmez.`;
+  }
+  kutu.querySelectorAll("[data-sim]").forEach(s => { secimler[s.dataset.sim] = s.value;
+    s.addEventListener("change", () => { secimler[s.dataset.sim] = s.value; hesapla(); }); });
+  hesapla();
+})();
+
+(function devam(){
+  const ninSinif = ((V.ninova||{}).siniflar || []);
+  const kayitlar = dersler.map(d => {
+    const nin = ninSinif.find(x => (x.ders||"").startsWith(d.kod));
+    const y = (d.yoklama && d.yoklama.toplam) ? d.yoklama : (nin && nin.yoklama);
+    return y && y.toplam ? {kod: d.kod, y, kaynak: (d.yoklama && d.yoklama.toplam) ? "OBS" : "Ninova"} : null;
+  }).filter(Boolean);
+  if (!kayitlar.length) return;
+  document.getElementById("devamBolum").hidden = false;
+  // kaçıncı haftadayız: gelecek haftaların boş kayıtları devamsızlık sayılmasın
+  const gecenHafta = donem.guzBas ? Math.floor((bugun - pazartesi(donem.guzBas)) / (7*864e5)) + 1 : 99;
+  document.getElementById("devam").innerHTML = kayitlar.map(({kod, y, kaynak}) => {
+    const sinir = /L$/.test(kod) ? 80 : 70;
+    const gecmis = (y.haftalar || []).filter(h => (parseInt(h.hafta) || 99) <= gecenHafta);
+    const toplam = gecmis.length ? gecmis.reduce((a,h) => a + h.ders, 0) : y.toplam;
+    const katildi = gecmis.length ? gecmis.reduce((a,h) => a + h.katilim, 0) : y.katildi;
+    const oran = toplam ? Math.round(1000 * katildi / toplam) / 10 : 0;
+    const haftalikSaat = gecmis.length ? Math.round(toplam / new Set(gecmis.map(h => h.hafta)).size) : 3;
+    const kalanHak = Math.max(0, Math.floor(haftalikSaat * 14 * (100 - sinir) / 100) - (toplam - katildi));
+    const genel = y.sinifGeneli ? ` · sınıf geneli ${esc(y.sinifGeneli)}` : "";
+    return `<div class="not"><span>${esc(kod)}
+        <span class="ozet">${katildi}/${toplam} saat · ${kaynak}${genel} · ${kalanHak} saat hakkın kaldı</span></span>
+      <span class="deger" style="color:var(--${oran>=sinir?"yesil":"kirmizi"})">%${fmt(oran)}</span></div>`;
+  }).join("");
+})();
+
+(function kayitBilgi(){
+  const d = obs.danisman || [], borc = obs.borclar || [], staj = obs.stajlar || [], anket = obs.anketler || [];
+  const gecmis = obs.kayitGecmisi || [];
+  const satir = (ad, deger, renk) => `<div class="not"><span>${esc(ad)}</span>
+    <span class="deger"${renk?` style="color:var(--${renk})"`:""}>${esc(deger)}</span></div>`;
+  document.getElementById("kayitBilgi").innerHTML =
+    (d.length ? satir("Danışmanın", d.map(x => x.ad).join(", ")) : "")
+    + satir("Borç", borc.length ? `${borc.length} kayıt` : "yok", borc.length ? "kirmizi" : "yesil")
+    + satir("Staj kaydı", staj.length ? `${staj.length} kayıt` : "yok")
+    + satir("Bekleyen ders anketi", anket.length ? `${anket.length} anket` : "yok", anket.length ? "bakir" : null)
+    + (gecmis.length ? `<div class="ay">Ders kayıt geçmişi</div>` + gecmis.slice(0,5).map(g =>
+        `<div class="not"><span>${esc(new Date(g.zaman).toLocaleString("tr-TR"))}</span>
+          <span class="deger">${(g.eklenen||[]).length ? "+ " + esc((g.eklenen||[]).join(", ")) : ""}
+            ${(g.birakilan||[]).length ? "− " + esc((g.birakilan||[]).join(", ")) : ""}</span></div>`).join("") : "");
+})();
+
+document.getElementById("duyurular").innerHTML = Object.entries(hav).flatMap(([kaynak, liste]) =>
+  (liste||[]).slice(0,6).map(d => `<div class="satir"><span class="etiket">${esc(kaynak)}</span><div class="ic">
+      <a href="${esc(d.url)}" target="_blank" rel="noopener"><div class="baslik">${esc(d.baslik)}</div></a></div></div>`)
+).join("") || `<div class="bos">Duyuru yok.</div>`;
+
+document.getElementById("zaman").textContent = "Veriler " + (V.guncellendi || "?") + " itibarıyla · OBS, Ninova, akademik takvim ve bölüm siteleri · her gün 07:00 ve 19:00'da yenilenir";
+if (/^(127\.0\.0\.1|localhost)$/.test(location.hostname)) document.getElementById("lnkArac").hidden = false;
+
+// açılış sekmesi: adresteki #etiket, yoksa ana sayfa (Bugün)
+const ilk = (location.hash || "").replace("#","") || "bugun";
+sekmeAc(ilk, false);
+window.addEventListener("hashchange", () => sekmeAc((location.hash || "").replace("#","") || "bugun", false));
+
+// ============================================================ Sor: panel verisiyle yapay zekâyla sohbet (önceki soruları hatırlar)
+(async () => {
+  const $ = id => document.getElementById(id);
+  const sohbet = $("sohbet"), form = $("sorForm"), girdi = $("sorGirdi"), dugme = $("sorDugme"), cipler = $("sorCipler");
+  const DUSUNUYOR = "Düşünüyor…";
+  let mesajlar = [], iptal = null;
+  try { mesajlar = JSON.parse(localStorage.getItem("panel-sohbet") || "[]").filter(m => m && m.metin && m.metin !== DUSUNUYOR); } catch(e) {}
+  const kaydet = () => { try { localStorage.setItem("panel-sohbet", JSON.stringify(mesajlar.slice(-40))); } catch(e) {} };
+  // basit biçim: **kalın**, madde işareti, link
+  const bicim = t => esc(t).replace(/\*\*(.+?)\*\*/g, "<b>$1</b>").replace(/^\s*[-*] /gm, "• ")
+    .replace(/(https?:\/\/[^\s<)]+)/g, '<a href="$1" target="_blank" rel="noopener">$1</a>');
+  const balon = m => `<div class="mesaj ${m.rol === "ben" ? "ben" : "o"}${m.hata ? " hata" : ""}">${m.rol === "ben" ? esc(m.metin) : bicim(m.metin)}</div>`;
+  const ciz = () => {
+    sohbet.innerHTML = mesajlar.map(balon).join("") || `<div class="bos">Panelindeki her şeyi sorabilirsin: dersler, sınavlar, gruplarda ve
+      e-postada konuşulanlar, yemek, ring… Sohbet devam eder; "peki ya yarın?" gibi devam soruları sorabilirsin.</div>`;
+    cipler.hidden = mesajlar.length > 0;
+  };
+  const asagi = () => { if (!$("s-sor").hidden) window.scrollTo({top: document.body.scrollHeight}); };
+  ciz();
+  $("yeniSohbet").onclick = () => { iptal?.abort(); mesajlar = []; kaydet(); ciz(); girdi.focus(); };
+  const ORNEK = ["Yarın ne var?", "Bu hafta sınav/quiz var mı?", "Gruplarda neler konuşuluyor?", "Salıki lab için ne hazırlamalıyım?", "Burs başvurularım ne durumda?"];
+  cipler.innerHTML = ORNEK.map(s => `<button type="button" class="cip">${esc(s)}</button>`).join("");
+
+  const ASISTAN = {ad: "Gemini", url: "https://gemini.google.com/app", ...((V.ayarlar || {}).asistan || {})};
+  const sample = (window.claude?.use && V.asistanMetni) ? await claude.use("sample") : null;
+  if (!sample){
+    $("yeniSohbet").hidden = true;
+    sohbet.innerHTML = `<div class="bos">Sorunu yaz; güncel panel özetiyle birlikte kopyalayıp ${esc(ASISTAN.ad)} sohbetine yapıştırabilirsin.</div>`;
+    dugme.textContent = "Kopyala";
+    $("sorYok").textContent = "Bu bağlantıda otomatik yanıt verilmez. Kopyaladığın soru, ders ve takvim özetini de içerir.";
+    $("sorYok").hidden = false;
+    cipler.hidden = false;
+    async function kopyala(soru){
+      if (!soru.trim()) return;
+      const metin = `Güncel İTÜ panel özetim aşağıda. Yalnız bu bilgiye dayanarak Türkçe, kısa cevap ver. Teyitsiz bilgiyi kesinmiş gibi anlatma.\n\n${V.asistanMetni || "Panel özeti bulunamadı."}\n\nSorum: ${soru.trim()}`;
+      try {
+        if (navigator.clipboard && window.isSecureContext) await navigator.clipboard.writeText(metin);
+        else {
+          const alan = document.createElement("textarea");
+          alan.value = metin; alan.style.position = "fixed"; alan.style.opacity = "0";
+          document.body.appendChild(alan); alan.focus(); alan.select();
+          const oldu = document.execCommand("copy"); alan.remove();
+          if (!oldu) throw new Error("Kopyalama desteklenmiyor");
+        }
+        $("sorYok").innerHTML = `Soru ve panel özeti kopyalandı. <a href="${esc(ASISTAN.url)}" target="_blank" rel="noopener">${esc(ASISTAN.ad)}’yi aç</a> ve yapıştır.`;
+      } catch(e) {
+        sohbet.textContent = metin;
+        $("sorYok").textContent = "Otomatik kopyalanamadı. Yukarıdaki soru ve özeti seçip kopyalayabilirsin.";
+      }
+    }
+    form.addEventListener("submit", e => { e.preventDefault(); kopyala(girdi.value); });
+    cipler.addEventListener("click", e => { const b = e.target.closest("button"); if (b) { girdi.value = b.textContent; kopyala(b.textContent); } });
+    return;
+  }
+  $("hizliSor").hidden = false;
+
+  const baglam = () => { const g = new Date();
+    return `Sen kullanıcının kişisel İTÜ asistanısın. Şu an: ${GUNLER[(g.getDay()+6)%7]} ${g.getDate()} ${AY[g.getMonth()]} ${g.getFullYear()} ${String(g.getHours()).padStart(2,"0")}:${String(g.getMinutes()).padStart(2,"0")}.
+Aşağıdaki bilgi dosyasına göre Türkçe, samimi ve kısa cevap ver (genelde en fazla 8 satır; madde işareti olabilir, markdown başlığı kullanma). Bu bir sohbet: önceki soru ve cevapları dikkate al.
+"teyit yok" işaretli bilgileri söylenti olarak belirt. Dosyada olmayan bir şeyi uydurma: "panelde bu bilgi yok" de ve nereye bakabileceğini (Ninova, OBS, ilgili grup) söyle.
+Gruplardaki tek tek mesajlar bu dosyada yok, sadece yapay zekânın özetleri var; tam mesaj araması için Gemini'de Drive'daki "İTÜ Asistan.txt" dosyasını sormasını öner.
+
+<bilgi>
+${V.asistanMetni}
+</bilgi>`; };
+
+  async function gonder(soru){
+    soru = soru.trim();
+    if (!soru || dugme.disabled) return;
+    iptal?.abort(); iptal = new AbortController();
+    const ben = {rol: "ben", metin: soru}, cevap = {rol: "o", metin: DUSUNUYOR};
+    mesajlar.push(ben, cevap); ciz(); asagi();
+    dugme.disabled = true; girdi.value = "";
+    // geçmiş: hatalılar hariç son 16 mesaj, kullanıcıyla başlasın, aynı rol üst üste gelmesin
+    const turlar = [];
+    for (const m of mesajlar.slice(0, -1).filter(m => !m.hata).slice(-16)){
+      const role = m.rol === "ben" ? "user" : "assistant";
+      if (!turlar.length && role !== "user") continue;
+      if (turlar.length && turlar[turlar.length-1].role === role) turlar[turlar.length-1].content += "\n" + m.metin;
+      else turlar.push({role, content: m.metin});
+    }
+    turlar[0].content = baglam() + "\n\nSoru: " + turlar[0].content;
+    const el = sohbet.lastElementChild;
+    try {
+      const r = await sample(turlar, {signal: iptal.signal, cache: false,
+        onText: ({text}) => { cevap.metin = text; el.innerHTML = bicim(text); }});
+      cevap.metin = r.text || "(boş cevap)";
+    } catch (err) {
+      if (err?.code === "cancelled"){ mesajlar = mesajlar.filter(m => m !== ben && m !== cevap); return; }
+      ben.hata = cevap.hata = true;
+      cevap.metin = err?.code === "rate_limited" ? "Çok sık soruldu, biraz sonra tekrar dene."
+        : err?.code === "not_granted" ? "Yapay zekâya soru sorma izni verilmedi. Sayfanın izinlerinden açabilirsin."
+        : "Cevap alınamadı: " + (err?.message || err?.code || "bilinmeyen hata");
+    } finally { dugme.disabled = false; ciz(); kaydet(); asagi(); }
+  }
+  form.addEventListener("submit", e => { e.preventDefault(); gonder(girdi.value); });
+  cipler.addEventListener("click", e => { const b = e.target.closest("button"); if (b) gonder(b.textContent); });
+  $("hizliSor").addEventListener("submit", e => {
+    e.preventDefault();
+    const s = $("hizliGirdi").value; $("hizliGirdi").value = "";
+    sekmeAc("sor"); gonder(s);
+  });
+})();
+</script>
+

@@ -1,0 +1,2 @@
+-r requirements.txt
+neonize>=0.5      # WhatsApp grup köprüsü (src/whatsapp_kopru.py) — sadece okur

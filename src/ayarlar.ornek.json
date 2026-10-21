@@ -1,0 +1,23 @@
+{
+  "_oku": "Kişisel ayarların. kurulum.py ilk çalışmada bunu src/ayarlar.json olarak kopyalar; sen ayarlar.json'u düzenle (git'e girmez).",
+  "program": null,
+  "_programNot": "Bölüm kodu (örn. EHBE_LS = Elektronik ve Haberleşme Müh. İngilizce, EHB_LS = Türkçe). kurulum.py OBS'den kendisi bulur.",
+  "dilPuani": null,
+  "dilKaynagi": "",
+  "_dilNot": "Erasmus kartı için İngilizce puanın (örn. İTÜ Proficiency 83). Bilmiyorsan null bırak.",
+  "hedefPuan": 90,
+  "erasmusBarajlari": [],
+  "_erasmusNot": "Bölümünün önceki yıl Erasmus hibe barajları: {\"yil\": \"2025-2026\", \"program\": \"...\", \"hibeBaraji\": 85.5, \"hibeli\": 10, \"yerlesen\": 30}. erasmus.itu.edu.tr sonuç listelerinden.",
+  "dersKaynaklari": {},
+  "takvimGizle": [],
+  "_takvimGizleNot": "Bu ifadeleri içeren akademik takvim maddeleri panelde gösterilmez.",
+  "asistan": {
+    "ad": "Gemini",
+    "url": "https://gemini.google.com/app"
+  },
+  "whatsapp": {
+    "_not": "SADECE bu gruplar okunur (adıyla birebir). kurulum.py --whatsapp seçtirip buraya yazar. Köprü hiçbir zaman mesaj göndermez.",
+    "gruplar": [],
+    "dersGrubuDeseni": "FIZ|MAT|KIM|EHB|ELE|EEF|BLG|havuz"
+  }
+}

@@ -1,0 +1,3 @@
+requests>=2.32
+pypdf>=5.0        # izlence (syllabus) PDF'lerini okumak için
+segno>=1.6        # QR kodları (WhatsApp eşleştirme, bildirim kanalı)

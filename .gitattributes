@@ -1,0 +1,4 @@
+*.sh text eol=lf
+pi/*.service text eol=lf
+pi/*.timer text eol=lf
+*.bat text eol=crlf

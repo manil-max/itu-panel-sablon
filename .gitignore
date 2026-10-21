@@ -1,0 +1,21 @@
+# Python
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+logs/
+.idea/
+.vscode/
+
+# İTÜ giriş bilgileri (asla commit edilmez)
+.env
+
+# senin verin: OBS/Ninova/WhatsApp/e-posta, üretilen paneller
+veri/
+panel.html
+ders-programi.html
+
+# kişisel ayarlar (örnekleri .ornek.json dosyalarında)
+src/ayarlar.json
+src/onemli_tarihler.json
+src/data.json
