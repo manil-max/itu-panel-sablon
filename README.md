@@ -17,7 +17,7 @@ havuz derslerinin izlenceleri (quiz tarihleri), isteğe bağlı WhatsApp gruplar
 ### Gemini / Antigravity ile (önerilen)
 Antigravity'de (ya da Gemini CLI'da) şunu yaz:
 
-> https://github.com/... bu repoyu indir ve GEMINI.md'ye göre benim için kur
+> https://github.com/manil-max/itu-panel-sablon bu repoyu indir ve GEMINI.md'ye göre benim için kur
 
 Gemini bir pencere açacak; İTÜ kullanıcı adını ve şifreni **o pencereye** yaz (Gemini'ye değil). Gerisini o halleder.
 Sonra "WhatsApp'ı kur", "bildirimi kur", "Drive'ı kur", "değerlendir", "güncelle" diyebilirsin.
