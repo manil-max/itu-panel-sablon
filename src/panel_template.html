@@ -452,10 +452,10 @@ const yerYazi = s => s.sinif || s.mekan || EK(s.kod).yer || (uzaktanMi(s.kod) ? 
 // Programı belli olup o gün deneyi olmayan haftalar "deney yok" olarak işaretlenir.
 const LAB_YER = /\bL\d\s*-?\s*F\d\b/i;
 function gunlukYer(s, tarih){
-  const liste = ((V.whatsapp || {}).olaylar || []).filter(x => x.ders === s.kod && x.bas && (x.yer || LAB_YER.test(x.konu || "")));
+  const liste = ((V.whatsapp || {}).olaylar || []).filter(x => x.ders === s.kod && x.bas && LAB_YER.test((x.yer || "") + " " + (x.konu || "")));   // sadece lab programı olayları (vize/telafi/quiz değil)
   if (!liste.length || !tarih) return {yer: yerYazi(s), yok: false};
   const o = liste.find(x => new Date(x.bas).toDateString() === tarih.toDateString());
-  if (o && o.yer) return {yer: o.yer, yok: false};
+  if (o && LAB_YER.test(o.yer || "")) return {yer: o.yer, yok: false};
   if (o) return {yer: o.konu.match(LAB_YER)[0].replace(/\s*-?\s*F/i, " F").toUpperCase() + " (lab sınıfı)", yok: false};
   const ilk = new Date(Math.min(...liste.map(x => +new Date(x.bas)))), son = new Date(Math.max(...liste.map(x => +new Date(x.bas))));
   return (tarih >= new Date(ilk.toDateString()) && tarih <= son) ? {yer: "bu hafta deneyin yok", yok: true} : {yer: yerYazi(s), yok: false};
