@@ -75,6 +75,20 @@ Pencere 5-10 dakika sürebilir (bölümünün ders planını ve bütün verini �
 - Google Drive (telefonda Gemini'ye panel özetini sormak için) → `docs/DRIVE.md`
 - İTÜ e-postası kendiliğinden kurulur; sorun olursa `docs/EPOSTA.md`
 
+## Kullanıcı "şu siteyi/kulübü takip et" derse
+
+Etkinlik/haber sitesini kaynak olarak ekle (arı24 kurulumda zaten eklenir). Instagram bu sürümde okunmaz.
+```powershell
+.\.venv\Scripts\python.exe src\kurulum.py --kaynak "https://site.com/etkinlikler" "Kulüp adı — Etkinlikler"
+.\.venv\Scripts\python.exe src\kurulum.py --kaynak-liste
+```
+Yeni içerik bir sonraki "değerlendir"de `ETKINLIK_ADAYLARI` olarak gelir.
+
+## Kullanıcı "ders dosyalarını indir" derse
+
+`.\.venv\Scripts\python.exe src\kurulum.py --dosyalar` (arka planda; Drive varsa `İTÜ/Dersler`'e, yoksa `veri\dersler`'e).
+Otomatik görev bunu zaten 10 saatte bir yapar.
+
 ## Kullanıcı "güncelle", "verileri yenile" derse
 
 ```powershell
@@ -91,6 +105,13 @@ Sonra kullanıcıya masaüstündeki **İTÜ Panel**'i yeniden açmasını söyle
 
 `veri/asistan.md` dosyasını oku (panelin düz metin özeti) ve ona göre cevap ver. Dosya yoksa ya da eskiyse önce "güncelle".
 "teyit yok" yazan bilgiler öğrenci söylentisidir; öyle belirt. Dosyada olmayanı uydurma, "panelde yok" de.
+
+## Program güncellemeleri
+
+Proje `git clone` ile indirildiyse otomatik görev her çalıştığında önce yeni sürümü çeker (`git pull --ff-only`).
+Yerelde değiştirilmiş takip edilen dosya varsa güncellemeyi atlar ve `veri\guncelleme.log`'a yazar. Bu yüzden `src/`
+içindeki kodu değiştirme; kişisel ayarlar `src/ayarlar.json`'da (git'e girmez, güncellemeyi engellemez).
+Elle güncellemek için: `git pull --ff-only`, sonra `.\.venv\Scripts\python.exe -m pip install -q -r requirements.txt`.
 
 ## Kullanıcı "çalışmıyor", "hata veriyor" derse
 
@@ -109,6 +130,9 @@ Kullanıcıya proje klasöründeki `otomasyon.bat`'a çift tıklamasını söyle
 | `kur.bat` | Çift tıklanan kurulum (Python'u bile kurar) |
 | `src/kurulum.py` | Kurulum adımları ve `--durum` |
 | `src/topla.py` | Bütün veriyi çeker → `veri/panel.json`, `panel.html`, `veri/asistan.md` |
+| `src/veri_gorevi.py` | Otomatik görevin çalıştırdığı: git pull + topla + (10 saatte bir) ders dosyaları |
+| `src/dosyalar.py`, `src/wa_dosya.py` | Ninova/Moodle ders dosyaları ve WhatsApp belgeleri → Drive'da ders klasörleri |
+| `src/etkinlikler.py` | Takip edilen etkinlik/haber siteleri (`veri/etkinlikler.db`) |
 | `src/gorev.py` | Değerlendirme adayları (`--ozet --dosya`) ve panel yenileme (`--panel`) |
 | `src/ayarlar.json` | Kişisel ayarlar: bölüm kodu, dil puanı, WhatsApp grupları (kullanıcı isterse düzenle) |
 | `src/onemli_tarihler.json` | Elle eklenen tarihler (kullanıcı "şu tarihi ekle" derse buraya ekle, aynı biçimde) |

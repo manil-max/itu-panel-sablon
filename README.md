@@ -6,7 +6,10 @@
 - **Hafta:** haftalık program; quiz, lab, ödev ve tatiller doğru güne ve derse işlenmiş
 - **Gündem:** Ninova duyuruları, ödevler, dosyalar, e-posta ve (istersen) WhatsApp ders gruplarından önemli notlar
 - **Takvim:** akademik takvim (sadece seni ilgilendirenler), final takvimi
-- **Ben:** notlar, AGNO simülasyonu, devamsızlık, danışman, Erasmus puanı
+- **Ben:** notlar, AGNO simülasyonu, not hesaplayıcı (finalden kaç lazım), hafta hafta devam, danışman, Erasmus puanı
+- **Fırsatlar:** staj, iş, bootcamp, burs, yarışma önerileri ve başvuru takibi
+- **Ders ekranı:** derse dokununca hoca, derslik, not dağılımı, haftalık konular, sınav konuları, ödev durumu, ders dosyaları
+- **Ders dosyaları:** Ninova ve Moodle'daki slayt/ödev/sınav dosyaları kendiliğinden Drive'ına (ders ders klasörlenmiş)
 - **Ders seçme aracı:** bölümünün ders planı, şubeler, hocalar, not dağılımları, çakışma kontrolü
 
 Kaynaklar: OBS, Ninova, İTÜ e-posta (salt-okunur), İTÜ Portal (yemek, bakiye), akademik takvim, SKS (ring),
@@ -29,6 +32,7 @@ Sonra "WhatsApp'ı kur", "bildirimi kur", "Drive'ı kur", "değerlendir", "günc
 4. Masaüstünde **İTÜ Panel** ve **İTÜ Ders Programı** kısayolları oluşur.
 
 Veriler her gün 07:30'dan itibaren 3 saatte bir kendiliğinden yenilenir (bilgisayar açıksa).
+`git clone` ile indirdiysen program da kendiliğinden güncellenir (yeni özellikler, düzeltmeler).
 
 ## İsteğe bağlı ekler
 
@@ -36,7 +40,8 @@ Veriler her gün 07:30'dan itibaren 3 saatte bir kendiliğinden yenilenir (bilgi
 | --- | --- | --- |
 | WhatsApp ders grupları | Gruplarda konuşulan sınav/ödev/derslik bilgileri panele not olarak düşer, belgeler iner | [docs/WHATSAPP.md](docs/WHATSAPP.md) |
 | Telefona bildirim | Her akşam yarınki sınav/lab hatırlatması | [docs/BILDIRIM.md](docs/BILDIRIM.md) |
-| Google Drive | Telefonda Gemini'ye "yarın ne var?" sorabilmek; WhatsApp belgeleri Drive'da | [docs/DRIVE.md](docs/DRIVE.md) |
+| Google Drive | Ders dosyaları ve WhatsApp belgeleri telefonda; telefonda Gemini'ye "yarın ne var?" | [docs/DRIVE.md](docs/DRIVE.md) |
+| Etkinlik kaynakları | arı24 (hazır) ve eklediğin kulüp siteleri → etkinlik/fırsat önerileri | Gemini'ye "şu siteyi takip et" |
 | İTÜ e-posta | Kendiliğinden kurulur | [docs/EPOSTA.md](docs/EPOSTA.md) |
 | Yapay zekâ değerlendirmesi | WhatsApp/e-postadan önemli olanları ayıklar | [docs/DEGERLENDIRME.md](docs/DEGERLENDIRME.md) |
 

@@ -28,14 +28,19 @@ ANAHTAR = re.compile(
     r"online|uzaktan|erasmus|staj|internship|başvuru|basvuru|son gün|son tarih|kontenjan|crn|şube|"
     r"kitap|textbook|not(lar)? açıkland|grade|ortalama|bütünleme|mazeret|muaf|proficiency|ydy|"
     r"kyk|gsb|kredi|dilekçe|dilekce|yemekhane|\bring\b|moodle|pearson|giriş yapam|giremiyor|açılmıyor|sorun|problem|"
-    r"aksaklık|kesinti|arıza|ödeme|depozito|rektörlük|öğrenci işleri|sks",
+    r"aksaklık|kesinti|arıza|ödeme|depozito|rektörlük|öğrenci işleri|sks|"
+    # kulüp/topluluk etkinlikleri (tanışma, workshop, eğitim, gezi, yarışma…)
+    r"etkinlik|event|workshop|atölye|tanışma|meetup|buluşma|toplantı|seminer|söyleşi|konferans|webinar|"
+    r"hackathon|ideathon|yarışma|turnuva|gezi|bootcamp|kariyer|career|eğitim|summit|zirve|konser|festival|"
+    r"piknik|kahvaltı|sosyal|kayıt formu|katılım formu|ücretsiz",
     re.I)
 def _ders_grubu_deseni():
+    """ayarlar.json -> whatsapp.dersGrubuDeseni: grup adında bunlardan biri geçerse ders grubu sayılır."""
     try:
         d = json.loads((Path(__file__).resolve().parent / "ayarlar.json").read_text(encoding="utf-8"))
-        return (d.get("whatsapp") or {}).get("dersGrubuDeseni") or "FIZ|MAT|KIM|EHB|ELE|EEF|BLG|havuz"
+        return (d.get("whatsapp") or {}).get("dersGrubuDeseni") or "FIZ|MAT|KIM|EHB|ELE|EEF|BLG|BBF|EKO|havuz"
     except (OSError, ValueError):
-        return "FIZ|MAT|KIM|EHB|ELE|EEF|BLG|havuz"
+        return "FIZ|MAT|KIM|EHB|ELE|EEF|BLG|BBF|EKO|havuz"
 
 
 DERS_GRUBU = re.compile(_ders_grubu_deseni(), re.I)
@@ -43,7 +48,7 @@ DERS_GRUBU = re.compile(_ders_grubu_deseni(), re.I)
 
 def aday_mi(r):
     tur, metin, grup, alinti = r["tur"], (r["metin"] or "").strip(), r["grup_adi"], r["alinti"] or ""
-    if tur in ("belge", "anket"):
+    if tur in ("belge", "anket", "davet", "etkinlik"):
         return True
     if not metin:
         return False

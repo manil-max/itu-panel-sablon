@@ -14,6 +14,9 @@
     python src/kurulum.py --whatsapp    # WhatsApp grupları: QR ile bağla, grupları seç
     python src/kurulum.py --whatsapp-sec 1,3,5-7   # grupları numarayla seç (listeyi --whatsapp-liste verir)
     python src/kurulum.py --notlar-kontrol         # veri/whatsapp/notlar.json geçerli mi (değerlendirmeden sonra)
+    python src/kurulum.py --kaynak <url> [ad]      # etkinlik/haber kaynağı ekle (kulüp sitesi vb.)
+    python src/kurulum.py --kaynak-liste           # takip edilen kaynaklar
+    python src/kurulum.py --dosyalar               # ders dosyalarını şimdi indir (arka planda)
 
 Çıktıdaki satırlar: "TAMAM:" bitti, "HATA:" sorun var (yanında ne yapılacağı yazar), "SONRAKI:" ne yapılmalı.
 Şifre hiçbir yere yazdırılmaz; sadece .env dosyasına kaydedilir (git'e girmez).
@@ -146,6 +149,18 @@ def notlar_kontrol():
         for alan in ("bas", "bit"):
             if o.get(alan) and not zaman(o[alan]):
                 sorun.append(f"olaylar[{i}] {alan} YYYY-MM-DDTHH:MM olmalı: {o[alan]}")
+    for i, f in enumerate(d.get("firsatlar") or []):
+        for alan in ("id", "tur", "ad"):
+            if alan not in f:
+                sorun.append(f"firsatlar[{i}] '{alan}' alanı yok")
+        if f.get("sonBasvuru") and not zaman(str(f["sonBasvuru"]) + "T00:00"):
+            sorun.append(f"firsatlar[{i}] sonBasvuru YYYY-MM-DD olmalı: {f['sonBasvuru']}")
+    b = d.get("brifing")
+    if b is not None and (not isinstance(b, dict) or "metin" not in b):
+        sorun.append('brifing {"metin": "...", "tarih": "YYYY-MM-DDTHH:MM"} olmalı')
+    for kod, x in (d.get("dersler") or {}).items():
+        if not isinstance(x, dict):
+            sorun.append(f"dersler['{kod}'] sözlük olmalı")
     if sorun:
         hata(f"notlar.json'da {len(sorun)} sorun:\n  - " + "\n  - ".join(sorun[:30]), "Düzelt, sonra tekrar: python src/kurulum.py --notlar-kontrol")
         return False
@@ -257,6 +272,7 @@ def giris(deneme_hakki=2):
             return False
         ENV.write_text(f"ITU_KULLANICI={kullanici}\nITU_SIFRE={sifre}\n", encoding="utf-8")
         (VERI / "giris_hatasi.json").unlink(missing_ok=True)
+        (VERI / "moodle_giris_hatasi.json").unlink(missing_ok=True)
         tamam("Giriş başarılı, bilgiler .env dosyasına kaydedildi.")
         return True
     hata("Giriş yapılamadı. Hesabın kilitlenmesin diye daha fazla denemiyorum.",
@@ -423,14 +439,27 @@ def gorevler():
         return False
     baslik("Otomatik güncelleme (Windows Görev Zamanlayıcı)")
     ok = gorev_kur(GOREV["veri"], "New-ScheduledTaskTrigger -Once -At 07:30 -RepetitionInterval (New-TimeSpan -Hours 3)",
-                   PYW, f'"{HERE / "topla.py"}"', HERE)
+                   PYW, f'"{HERE / "veri_gorevi.py"}"', HERE)
     print("  Her gün 07:30'dan itibaren 3 saatte bir veri çekilir; bilgisayar kapalıysa açılınca çalışır.")
+    print("  Proje git ile indirildiyse her seferinde önce yeni sürüm de çekilir (git pull; yerel değişiklik varsa dokunmaz).")
     if (VERI / "bildirim.json").exists():
         gorev_kur(GOREV["hatirlatma"], "New-ScheduledTaskTrigger -Daily -At 21:00", PYW, f'"{HERE / "bildirim.py"}" --aksam', HERE)
     if (ayar_oku().get("whatsapp") or {}).get("gruplar") and (VERI / "whatsapp" / "oturum.sqlite3").exists():
         gorev_kur(GOREV["whatsapp"], f"New-ScheduledTaskTrigger -AtLogOn -User '{os.environ.get('USERDOMAIN', '')}\\{os.environ.get('USERNAME', '')}'",
                   PYW, "whatsapp_kopru.py", HERE)
     return ok
+
+
+def dosyalar_arkaplan():
+    """Ders dosyalarını (Ninova + Moodle -> Drive'ım/İTÜ/Dersler, Drive yoksa veri/dersler) arka planda indirir.
+    Sonra veri görevi 10 saatte bir yeni gelenleri indirir."""
+    kod = "import dosyalar, wa_dosya; dosyalar.calistir(log=lambda *x: None); wa_dosya.duzenle()"
+    try:
+        subprocess.Popen([str(PYW), "-c", kod], cwd=HERE, creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
+        (VERI / "dosyalar_son.txt").write_text(dt.datetime.now().isoformat(timespec="seconds"), encoding="utf-8")
+        tamam("Ders dosyaları arka planda iniyor (Ninova + Moodle; ilk seferde biraz sürer).")
+    except OSError as e:
+        hata(f"Ders dosyaları başlatılamadı ({e.__class__.__name__})")
 
 
 def masaustu():
@@ -512,8 +541,8 @@ def drive():
              "sonra tekrar: python src/kurulum.py --drive")
         return False
     tamam(f"Drive klasörü: {kok}")
-    print("  WhatsApp dosyaları 'İTÜ WhatsApp Dosyaları' klasörüne, panel özeti 'İTÜ Asistan.txt' dosyasına yazılır.")
-    print("  Telefonda Gemini'de + > Drive > 'İTÜ Asistan.txt' ekleyip soru sorabilirsin.")
+    print("  Ders dosyaları ve WhatsApp belgeleri 'İTÜ/Dersler/<ders>/' klasörüne, panel özeti 'İTÜ/İTÜ Asistan.txt' dosyasına yazılır.")
+    print("  Telefonda Gemini'de + > Drive > İTÜ > 'İTÜ Asistan.txt' ekleyip soru sorabilirsin.")
     if (VERI / "panel.json").exists():
         import topla
         topla.panel_uret()
@@ -630,9 +659,38 @@ setInterval(() => img.src = "qr.png?t=" + Date.now(), 2000); img.src = "qr.png?t
 
 
 # ------------------------------------------------------------------ hepsi
+VARSAYILAN_KAYNAKLAR = [("arı24 — Etkinlikler", "https://ari24.com/etkinlikler"),
+                        ("arı24 — Haberler", "https://ari24.com/haberler")]
+
+
+def kaynak_ekle(url=None, ad=None):
+    """Etkinlik/haber kaynağı (kulüp sitesi vb.) ekler; değişen içeriği değerlendirmeye aday olur.
+    url verilmezse ve hiç kaynak yoksa arı24'ün etkinlik ve haber sayfaları eklenir."""
+    import etkinlikler
+    try:
+        if url:
+            etkinlikler.degistir({"islem": "kaynak_ekle", "url": url, "ad": ad})
+            tamam(f"Kaynak eklendi: {ad or url}")
+        elif not etkinlikler.durum()["kaynaklar"]:
+            for a, u in VARSAYILAN_KAYNAKLAR:
+                etkinlikler.degistir({"islem": "kaynak_ekle", "url": u, "ad": a})
+            tamam("Etkinlik kaynakları: arı24 etkinlikler + haberler")
+    except ValueError as e:
+        hata(str(e))
+        return False
+    return True
+
+
+def kaynak_liste():
+    import etkinlikler
+    for k in etkinlikler.durum()["kaynaklar"]:
+        print(f"- {k['ad']}  {k['url']}  ({'açık' if k['aktif'] else 'kapalı'}; {k.get('durum') or ''})")
+
+
 def hepsi():
     print("İTÜ Panel kurulumu. Her adımda ne olduğunu yazacağım.\n")
     ornekleri_kopyala()
+    kaynak_ekle()
     import itu
     if not env_var() or (VERI / "giris_hatasi.json").exists():
         if not giris():
@@ -647,6 +705,7 @@ def hepsi():
     if not veri():
         return 1
     gorevler()
+    dosyalar_arkaplan()
     kisayol()
     eposta()
     if sor("\nTelefona bildirim (sınav/lab hatırlatması) kurulsun mu?"):
@@ -693,6 +752,13 @@ if __name__ == "__main__":
         bildirim()
     elif "--drive" in a:
         drive()
+    elif "--dosyalar" in a:
+        dosyalar_arkaplan()
+    elif "--kaynak-liste" in a:
+        kaynak_liste()
+    elif "--kaynak" in a:
+        i = a.index("--kaynak")
+        sys.exit(0 if kaynak_ekle(a[i + 1] if len(a) > i + 1 else None, " ".join(a[i + 2:]) or None) else 1)
     elif "--notlar-kontrol" in a:
         ornekleri_kopyala()
         sys.exit(0 if notlar_kontrol() else 1)

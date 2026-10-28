@@ -39,7 +39,7 @@ VIDEO_SINIR = 25 * 1024 * 1024
 BELGE_SINIR = 60 * 1024 * 1024                  # daha büyük belge indirilmez, sadece işaretlenir
 # foto/video sadece ders gruplarından iner; sohbet gruplarından sadece belge (PDF vb.)
 DERS_GRUBU = re.compile(json.loads(AYAR.read_text(encoding="utf-8")).get("whatsapp", {}).get("dersGrubuDeseni")
-                        or "FIZ|MAT|KIM|EHB|ELE|EEF|BLG|havuz", re.I)   # ayarlar.json -> whatsapp.dersGrubuDeseni
+                        or "FIZ|MAT|KIM|EHB|ELE|EEF|BLG|BBF|EKO|havuz", re.I)   # ayarlar.json -> whatsapp.dersGrubuDeseni
 
 WA.mkdir(parents=True, exist_ok=True)
 KURALLAR = json.loads(AYAR.read_text(encoding="utf-8")).get("whatsapp", {})
@@ -51,8 +51,8 @@ def drive_klasoru():
     elle = KURALLAR.get("dosyaKlasoru")
     if elle:
         return Path(elle)
-    import drive_yolu
-    kok = drive_yolu.drive_koku()
+    from drive_yerel import drive_ana             # Windows: G:\My Drive · Pi: ITU_DRIVE (rclone mount)
+    kok = drive_ana()
     return kok / "İTÜ WhatsApp Dosyaları" if kok else None
 
 
@@ -142,12 +142,32 @@ def _guvenli(s, n=60):
     return re.sub(r'[\\/:*?"<>|\r\n]+', "_", s or "").strip(" .")[:n] or "dosya"
 
 
+METIN_ALANLARI = {"text", "caption", "conversation", "name", "title", "description", "groupName", "matchedText",
+                  "canonicalUrl", "body", "contentText", "footerText", "displayName", "selectedDisplayText", "url"}
+
+
+def _metinler(m, derinlik=0):
+    """Tanınmayan mesaj türlerinden (buton, şablon, etkileşimli, kanal iletisi…) okunabilir metni toplar."""
+    out = []
+    for fd, deger in m.ListFields():
+        if fd.name in ("contextInfo", "messageContextInfo", "jpegThumbnail"):
+            continue
+        if fd.type == fd.TYPE_MESSAGE:
+            if derinlik < 6:
+                for v in (deger if isinstance(deger, (list, tuple)) or hasattr(deger, "__len__") and not hasattr(deger, "ListFields") else [deger]):
+                    out += _metinler(v, derinlik + 1)
+        elif fd.type == fd.TYPE_STRING and fd.name in METIN_ALANLARI and deger:
+            out.append(deger)
+        elif fd.type == fd.TYPE_STRING and fd.name == "inviteCode" and deger:
+            out.append("https://chat.whatsapp.com/" + deger)
+    return list(dict.fromkeys(out))
+
+
 def _icerik(m):
     """waE2E.Message -> (tür, metin, dosya_adi, medya_mesajı, alıntı)"""
-    if m.HasField("ephemeralMessage"):
-        m = m.ephemeralMessage.message
-    if m.HasField("viewOnceMessage"):
-        m = m.viewOnceMessage.message
+    for sarmal in ("ephemeralMessage", "viewOnceMessage", "viewOnceMessageV2", "viewOnceMessageV2Extension", "editedMessage"):
+        if m.HasField(sarmal):
+            m = getattr(m, sarmal).message
     if m.HasField("documentWithCaptionMessage"):
         m = m.documentWithCaptionMessage.message
     alinti = ""
@@ -174,9 +194,19 @@ def _icerik(m):
     if m.HasField("pollCreationMessage") or m.HasField("pollCreationMessageV3"):
         p = m.pollCreationMessage if m.HasField("pollCreationMessage") else m.pollCreationMessageV3
         return "anket", p.name + " | " + " / ".join(o.optionName for o in p.options), "", None, ""
+    if m.HasField("groupInviteMessage"):              # "gruba katıl" kartı: link metinde yok, davet kodundan kurulur
+        g = m.groupInviteMessage
+        return ("davet", f"Grup daveti: {g.groupName} https://chat.whatsapp.com/{g.inviteCode}"
+                + (f" {g.caption}" if g.caption else ""), "", None, alinti)
+    if m.HasField("eventMessage"):                   # WhatsApp etkinlik kartı (ad, zaman, yer)
+        e = m.eventMessage
+        zaman = datetime.fromtimestamp(e.startTime).strftime("%d.%m.%Y %H:%M") if e.startTime else ""
+        return ("etkinlik", f"Etkinlik: {e.name} | {zaman} | {e.location.name or ''} | {e.description}"
+                + (f" | {e.joinLink}" if e.joinLink else ""), "", None, alinti)
     if m.HasField("stickerMessage") or m.HasField("reactionMessage") or m.HasField("protocolMessage"):
         return None, "", "", None, ""
-    return "diger", "", "", None, alinti
+    metin = " | ".join(_metinler(m))[:4000]
+    return ("diger", metin, "", None, alinti) if metin else (None, "", "", None, "")
 
 
 def _indir(client, tam_mesaj, tur, medya, grup_adi, zaman, mid, dosya_adi, ders_grubu):
@@ -198,6 +228,14 @@ def _indir(client, tam_mesaj, tur, medya, grup_adi, zaman, mid, dosya_adi, ders_
             c.close()
         if r and (KOK / r[0]).exists():
             return r[0], ozet
+    if dosya_adi and medya.fileLength:             # aynı ad + aynı boyut daha önce indiyse (farklı gruptan) tekrar indirme
+        with kilit:
+            c = db()
+            for (y,) in c.execute("SELECT DISTINCT dosya FROM mesajlar WHERE dosya_adi=? AND dosya!=''", (dosya_adi,)):
+                if (KOK / y).is_file() and (KOK / y).stat().st_size == medya.fileLength:
+                    c.close()
+                    return y, ozet
+            c.close()
     uzanti = {"foto": ".jpg", "video": ".mp4"}.get(tur, "")
     ad = _guvenli(dosya_adi, 80) if dosya_adi else mid[:12] + uzanti
     klasor = dosya_kok() / _guvenli(grup_adi)
@@ -243,7 +281,10 @@ def _jid(j):
 
 
 def gruplari_yukle(client):
+    global KURALLAR                                  # ayarlar.json'a yeni onaylanan grup eklendiyse yeniden başlatmadan dinlensin
+    KURALLAR = json.loads(AYAR.read_text(encoding="utf-8")).get("whatsapp", {})
     gruplar = list(client.get_joined_groups())
+    SECILI.clear()
     for g in gruplar:
         GRUP_ADI[_jid(g.JID)] = g.GroupName.Name
     liste = []
@@ -327,6 +368,18 @@ def main():
         durum_yaz(bagli=True, qrBekliyor=False, dinlenen=len(secilen),
                   sonBaglanti=datetime.now().isoformat(timespec="seconds"))
         hazir.set()
+
+    def _yenile():                                   # yeni katılınan grupları gruplar.json'a yazar (panel "dinleyeyim mi?" diye sorar)
+        while True:
+            time.sleep(1800)
+            try:
+                if client.is_connected():
+                    gruplari_yukle(client)
+            except Exception as e:
+                log("grup listesi yenilenemedi:", type(e).__name__)
+
+    if not sadece_liste:
+        threading.Thread(target=_yenile, daemon=True).start()
 
     @client.event(MessageEv)
     def _mesaj(c, ev):

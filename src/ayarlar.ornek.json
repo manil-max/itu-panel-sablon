@@ -11,6 +11,8 @@
   "dersKaynaklari": {},
   "takvimGizle": [],
   "_takvimGizleNot": "Bu ifadeleri içeren akademik takvim maddeleri panelde gösterilmez.",
+  "muafDersler": [],
+  "_muafNot": "Muaf olduğun dersler (örn. [\"ING 100\"]): programda ve akışta gösterilmez.",
   "asistan": {
     "ad": "Gemini",
     "url": "https://gemini.google.com/app"
@@ -18,6 +20,6 @@
   "whatsapp": {
     "_not": "SADECE bu gruplar okunur (adıyla birebir). kurulum.py --whatsapp seçtirip buraya yazar. Köprü hiçbir zaman mesaj göndermez.",
     "gruplar": [],
-    "dersGrubuDeseni": "FIZ|MAT|KIM|EHB|ELE|EEF|BLG|havuz"
+    "dersGrubuDeseni": "FIZ|MAT|KIM|EHB|ELE|EEF|BLG|BBF|EKO|havuz"
   }
 }

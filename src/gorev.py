@@ -57,6 +57,13 @@ def topla():
         sys.exit(1)
     uyarilar = [s for s in cikti.splitlines() if "alınamadı" in s or "Hata" in s]
     print("topla.py tamam." + (" Uyarılar: " + " | ".join(uyarilar[:5]) if uyarilar else ""))
+    try:                                             # ders dosyaları -> Drive'ım/İTÜ/Dersler, WhatsApp dosyalarını düzenle
+        import dosyalar
+        import wa_dosya
+        dosyalar.calistir(log=lambda *x: None)
+        wa_dosya.duzenle()
+    except Exception as e:
+        print("DOSYA_HATASI:", e.__class__.__name__, e)
 
 
 def ozet():
@@ -119,6 +126,9 @@ def ozet():
     bosluklar(d)
     whatsapp_adaylari()
     eposta_adaylari()
+    bildirim_adaylari()
+    import etkinlikler
+    etkinlikler.adaylari_yazdir()
     ONCEKI.write_text(json.dumps({"zaman": simdi.isoformat(timespec="minutes"), "notlar": list(notlar)},
                                  ensure_ascii=False), encoding="utf-8")
 
@@ -147,6 +157,42 @@ def bosluklar(d):
         t = iso(n.get("tarih"))
         if n.get("teyit") == "yok" and (n.get("onem") or 3) <= 2 and t and (simdi - t).days >= 2:
             satir.append(f"- teyit bekleyen not '{n['id']}': {n['baslik'][:80]} -> Ninova/e-postada doğrulandı mı?")
+    try:                                             # ders dosyaları: syllabus okunmamış dersler, sınav eksikleri
+        import asistan
+        import dosyalar as dsy
+        kayit = dsy.kayit_oku()
+        for ders in (d.get("obs") or {}).get("dersler", []):
+            kod = ders["kod"]
+            if not ek.get(kod, {}).get("degerlendirme"):
+                sy = [v for v in kayit.get("dosyalar", {}).values() if v.get("ders") == kod and v.get("kategori") == "Syllabus"]
+                if not sy:   # syllabus yoksa not dağılımı çoğu zaman ilk slaytta (ör. BBF 101E 'Assessment (tentative)')
+                    sy = [v for v in kayit.get("dosyalar", {}).values() if v.get("ders") == kod and any(
+                        re.search(r"assessment|grading|evaluation|değerlendirme", b or "", re.I) for b in v.get("basliklar") or [])]
+                satir.append(f"- {kod}: not dağılımı yok -> dersler[kod].degerlendirme ("
+                             + ("oku: " + ", ".join(f"{v['ad']} = {v.get('metinDosyasi')}" for v in sy[:3]) if sy
+                                else "syllabus dosyası yok; izlence/duyuru/hoca sayfası") + ")")
+        wa = {**notlar, "dersler": ek}
+        for e in asistan.eksikler(d, wa, kayit, asistan.olaylar(d, wa, 8)):
+            satir.append(f"- {e} -> dersler[kod].sinavlar[] (ad, tarih, kapsam, konular, salon, sira)")
+        son = simdi - dt.timedelta(days=2)
+        yeni = [v for v in kayit.get("dosyalar", {}).values() if iso(v.get("indirildi")) and iso(v["indirildi"]) > son]
+        for v in yeni[:25]:
+            satir.append(f"- yeni dosya {v['ders']} · {v['kategori']} · {v['ad']} -> metin: {v.get('metinDosyasi')}"
+                         + (f" · başlıklar: {'; '.join(v['basliklar'][:8])}" if v.get("basliklar") else ""))
+        import wa_dosya
+        # Drive klasörü proje dışında: Read izin sorup beklemesin diye resmin kopyası veri/onizleme/'ye konur
+        import shutil
+        onizleme = VERI / "onizleme"
+        shutil.rmtree(onizleme, ignore_errors=True)
+        onizleme.mkdir(exist_ok=True)
+        for y, g, m in wa_dosya.adsizlar()[:15]:
+            kopya = onizleme / Path(y).name
+            shutil.copy2(y, kopya)
+            satir.append(f"- adı anlamsız resim ({g}): Read ile bak: {kopya} · asıl dosya: {y} -> ders materyaliyse "
+                         f"wa_dosya.py --adlandir \"<asıl dosya>\" ..., sohbet/mizahsa wa_dosya.py --ele \"<asıl dosya>\""
+                         + (f" (mesaj: {m})" if m else ""))
+    except Exception as e:
+        satir.append(f"- (dosya kontrolü yapılamadı: {e.__class__.__name__} {e})")
     print(f"\n=== PANEL_BOSLUKLARI: {len(satir)} ===")
     print("\n".join(satir) if satir else "(yok)")
 
@@ -201,14 +247,34 @@ def eposta_adaylari():
               + (f"\n  EKLER: {r['ekler']}" if r["ekler"] else ""))
 
 
+def bildirim_adaylari():
+    """İTÜ Mobil / Portal bildirimlerinden henüz değerlendirilmemişleri yazdırır (Ninova duyurusu yankıları hariç)."""
+    try:
+        bild = (json.loads((VERI / "panel.json").read_text(encoding="utf-8")).get("kampus") or {}).get("bildirimler") or []
+    except (OSError, ValueError):
+        return
+    yol = VERI / "bildirim_gorulen.json"
+    gorulen = set(json.loads(yol.read_text(encoding="utf-8"))) if yol.exists() else set()
+    sinir = dt.datetime.now() - dt.timedelta(days=10)
+    zaman = lambda b: dt.datetime.strptime((b.get("tarih") or "01.01.2000 00:00:00")[:19], "%d.%m.%Y %H:%M:%S")
+    adaylar = [b for b in bild if b["id"] not in gorulen and not b.get("ninova") and zaman(b) >= sinir]
+    (VERI / "bildirim_bekleyen.json").write_text(json.dumps([b["id"] for b in bild if b["id"] not in gorulen]), encoding="utf-8")
+    print(f"\n=== ITU_BILDIRIMLERI: {len(adaylar)} yeni (İTÜ Mobil/Portal; kampüs duyurusu ya da hocanın kişisel bildirimi) ===")
+    for b in adaylar:
+        print(f"- {b['tarih'][:16]} | {b['baslik']}\n  {b['metin'][:1200] or b['ozet']}")
+
+
 def panel_yenile():
     """Önce paneli üret; yalnız başarılı üretimden sonra adayları tüket."""
     sys.path.insert(0, str(HERE))
     import kurulum
     if not kurulum.notlar_kontrol():                 # bozuk notlar.json ile panel üretme, adayları tüketme
         sys.exit(1)
+    sys.path.insert(0, str(HERE))
     import topla
     topla.panel_uret()
+    import etkinlikler
+    etkinlikler.degerlendirildi()
     bek = VERI / "whatsapp" / "bekleyen.json"
     if bek.exists():
         ids = json.loads(bek.read_text(encoding="utf-8"))
@@ -227,6 +293,14 @@ def panel_yenile():
         c.close()
         bek.unlink()
         print(len(ids), "e-posta değerlendirildi olarak işaretlendi")
+    bek = VERI / "bildirim_bekleyen.json"
+    if bek.exists():
+        yol = VERI / "bildirim_gorulen.json"
+        gorulen = set(json.loads(yol.read_text(encoding="utf-8"))) if yol.exists() else set()
+        ids = json.loads(bek.read_text(encoding="utf-8"))
+        yol.write_text(json.dumps(sorted(gorulen | set(ids))), encoding="utf-8")
+        bek.unlink()
+        print(len(ids), "İTÜ bildirimi değerlendirildi olarak işaretlendi")
     try:                                             # yeni önemli notlar telefona (ntfy)
         import bildirim
         bildirim.yeni_notlar()

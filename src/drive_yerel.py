@@ -13,6 +13,50 @@ import urllib.parse
 from pathlib import Path
 
 KLASOR = "İTÜ WhatsApp Dosyaları"
+RCLONE = os.environ.get("ITU_RCLONE", "gdrive:")      # Pi: rclone'daki Drive remote'u
+
+
+def drive_ana():
+    """Drive'ın 'Drive'ım' kökü: ITU_DRIVE ortam değişkeni (Pi'de rclone mount), yoksa Windows'ta
+    Google Drive for Desktop'un harfi (G: ...), yoksa ~/gdrive. Hiçbiri yoksa None."""
+    try:                                              # şablon: ayarlar.json -> driveKlasoru (elle)
+        import json
+        elle = json.loads((Path(__file__).resolve().parent / "ayarlar.json").read_text(encoding="utf-8")).get("driveKlasoru")
+        if elle and Path(elle).is_dir():
+            return Path(elle)
+    except (OSError, ValueError):
+        pass
+    if os.environ.get("ITU_DRIVE"):
+        k = Path(os.environ["ITU_DRIVE"])
+        return k if k.is_dir() else None
+    if os.name == "nt":
+        for harf in "GHIJKLMNOPQRSTUVWXYZDEF":
+            for ad in ("My Drive", "Drive'ım", "Drive’ım"):
+                k = Path(f"{harf}:/") / ad
+                if k.is_dir():
+                    return k
+        return None
+    k = Path.home() / "gdrive"
+    return k if k.is_dir() and any(k.iterdir()) else None      # boş = mount edilmemiş
+
+
+def _rclone_idleri(kok):
+    """Drive for Desktop yoksa (Pi) aynı bilgiyi rclone'dan alır: -> (klasör_id, {yol: id}) ya da (None, {})."""
+    import json
+    import subprocess
+    if not shutil.which("rclone"):
+        return None, {}
+    try:
+        ust = json.loads(subprocess.run(["rclone", "lsjson", "--dirs-only", RCLONE], capture_output=True,
+                                        text=True, encoding="utf-8", timeout=120).stdout or "[]")
+        kid = next((x.get("ID") for x in ust if x.get("Name") == kok), None)
+        if not kid:
+            return None, {}
+        l = json.loads(subprocess.run(["rclone", "lsjson", "-R", RCLONE + kok], capture_output=True,
+                                      text=True, encoding="utf-8", timeout=300).stdout or "[]")
+    except (OSError, ValueError, subprocess.SubprocessError):
+        return None, {}
+    return kid, {x["Path"] + ("/" if x.get("IsDir") else ""): x.get("ID") for x in l if x.get("ID")}
 
 
 def _kopya(db):
@@ -50,7 +94,7 @@ def klasor_idleri(kok=KLASOR):
             return r[0], sonuc
         except sqlite3.Error:
             continue
-    return None, {}
+    return _rclone_idleri(kok)
 
 
 def link(dosya_id=None, ad=None, klasor=False):

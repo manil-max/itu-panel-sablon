@@ -239,10 +239,21 @@ def _mesaj_panosu(s, sid):
         hucre = [x for x in hucre if x]
         if not hucre or hucre[0].startswith(("Mesaj Başlığı", "Mesaj panosunda")):
             continue
-        baglanti = [html.unescape(u) for u in re.findall(r'href="(https?://[^"]+)"', satir)]
+        baglanti = [html.unescape(u) for u in re.findall(r"""href=["'](https?://[^"']+)["']""", satir)]
         ic_link = re.findall(r"(https?://\S+)", " ".join(hucre))
+        detay = re.search(r"""href=["'](/Sinif/[\d.]+/MesajPanosu/\d+)["']""", satir)
+        # listede mesajın sadece başı görünüyor ("…"): linki görünmüyorsa mesajı açıp tamamından al
+        if detay and not (baglanti or ic_link) and (hucre[0].endswith("...") or re.search(r"link|whatsapp|grup", hucre[0], re.I)):
+            try:
+                tam = _orta(s.get(NINOVA + detay.group(1), timeout=40).text)
+                baglanti = [html.unescape(u) for u in re.findall(r"""href=["'](https?://[^"']+)["']""", tam)]
+                ic_link = re.findall(r"(https?://[^\s<\"']+)", re.sub(r"<[^>]+>", " ", tam))
+            except requests.RequestException:
+                pass
         out.append({"baslik": hucre[0], "bilgi": " · ".join(hucre[1:])[:120],
-                    "linkler": sorted(set(baglanti + ic_link))[:4]})
+                    "linkler": sorted({u.rstrip(".,)") for u in baglanti + ic_link
+                                 if len(u) > 15 and not re.search(r"(ninova|girisv3|bidb)\.itu\.edu\.tr", u)})[:4],
+                    **({"url": NINOVA + detay.group(1)} if detay else {})})
     return out
 
 
@@ -587,6 +598,43 @@ def _tablolar(url):
     return out
 
 
+NINOVA_YANKISI = re.compile(r"^Sınıfınız(a|daki) (Duyuru|ödev)", re.I)   # Ninova duyurusunun bildirimi: Ninova'dan zaten geliyor
+
+
+def portal_bildirim(s, log=print):
+    """İTÜ Mobil'deki 'Bildirimler' listesi (Portal GetNotification, salt-okunur) + İTÜ etkinlik listesi (GetEtkinlik).
+    Kampüs duyuruları (yemekhane, yol, ring) ve hocanın Ninova'dan gönderdiği kişisel bildirimler buradan gelir."""
+    basliklar = {"Content-Type": "application/json; charset=utf-8", "Accept": "application/json",
+                 "X-Requested-With": "XMLHttpRequest", "Referer": f"{PORTAL}/apps/default/"}
+
+    def cagir(metot, sorgu=""):
+        try:
+            r = s.get(f"{PORTAL}/apps/default/service/service.aspx/{metot}" + (f"?{sorgu}" if sorgu else ""),
+                      headers=basliklar, timeout=40)
+            return r.json().get("d") if "json" in r.headers.get("Content-Type", "") else None
+        except (requests.RequestException, ValueError):
+            return None
+
+    bildirimler, gorulen = [], set()
+    for n in ((cagir("GetNotification", "all=true") or {}).get("NotificationInformationList") or []):
+        anahtar = (n.get("Title"), n.get("CreateDate"))          # aynı bildirim iki kez gelebiliyor
+        if anahtar in gorulen:
+            continue
+        gorulen.add(anahtar)
+        icerik = n.get("ContentText") or ""
+        tire = lambda x: re.sub(r"\s\?(?=\s)", " –", x)     # Portal tireyi (–) "?" olarak gönderiyor; gerçek soru işaretinden önce boşluk olmaz
+        bildirimler.append({"id": str(n.get("ObjectId")), "baslik": tire(metin(n.get("Title") or "")),
+                            "tarih": n.get("CreateDate") or n.get("BeforeCreateDate"),
+                            "ozet": tire(re.sub(r"\s+", " ", metin(n.get("SummaryText") or "")))[:400],
+                            "metin": tire(re.sub(r"\s+", " ", metin(re.sub(r"(?is)<(style|script|head)\b.*?</\1>", " ", icerik))))[:3000],
+                            "ninova": bool(NINOVA_YANKISI.search(n.get("Title") or ""))})
+    etkinlik = [{"ad": metin(e.get("EtkinlikAdi") or ""), "aciklama": metin(e.get("EtkinlikAciklamasi") or ""),
+                 "url": e.get("URL")} for e in ((cagir("GetEtkinlik") or {}).get("EtkinlikInformationList") or [])][:30]
+    log(f"  portal bildirimleri: {len(bildirimler)} (kampüs/kişisel {sum(not b['ninova'] for b in bildirimler)}), "
+        f"İTÜ etkinlik listesi: {len(etkinlik)}")
+    return bildirimler, etkinlik
+
+
 def kampus_bilgileri(log=print):
     """Ring servis saatleri, yemek saatleri ve yemek fiyatları (sks.itu.edu.tr, herkese açık)."""
     veri = {"kaynak": {"ring": f"{SKS}/kampus-ici-ring-servis", "saat": f"{SKS}/yemek-saatleri",
@@ -595,6 +643,7 @@ def kampus_bilgileri(log=print):
         s, _ = itu.oturum(f"{PORTAL}/apps/default/", env=itu.env_oku())
         veri["yemekMenusu"] = portal_yemek(s, log=log)
         veri["hesap"] = portal_hesap(s, log=log)
+        veri["bildirimler"], veri["portalEtkinlik"] = portal_bildirim(s, log=log)
     except (itu.GirisHatasi, requests.RequestException) as e:
         log(f"  portal verisi alınamadı ({e.__class__.__name__})")
         veri["yemekMenusu"], veri["hesap"] = None, None
@@ -617,6 +666,15 @@ def duyuru_sitesi(url, log=print):
         log(f"  {url}: alınamadı ({e.__class__.__name__})")
         return []
     out, gorulen = [], set()
+    # bazı siteler (fizikhavuz) duyuruyu link değil sayfa içinde açılır kutu olarak veriyor: başlık + tarih + metin
+    for m in re.finditer(r'class="index_ann_item".*?<strong>(.*?)</strong>.*?class="index_ann_date">(.*?)</small>'
+                         r'.*?class="index_ann_content"[^>]*>(.*?)</li>', t, re.S):
+        baslik = metin(m.group(1))
+        if baslik and baslik.lower() not in gorulen:
+            gorulen.add(baslik.lower())
+            out.append({"baslik": baslik, "url": url, "tarih": metin(m.group(2)), "ozet": metin(m.group(3))[:400]})
+    if out:
+        return out[:15]
     for m in re.finditer(r'<a[^>]*href="([^"#]{4,200})"[^>]*>(.{3,160}?)</a>', t, re.S):
         baslik = metin(m.group(2))
         if len(baslik) < 12 or baslik.lower() in gorulen:
@@ -682,16 +740,27 @@ def _main():
             veri[ad] = [] if ad == "onemliTarihler" else {}
     veri["izlenceler"], veri["izlenceBilgi"] = izlenceler(
         G.S, [d["kod"] for d in (veri.get("obs") or {}).get("dersler", [])],
-        (veri.get("ayarlar") or {}).get("izlenceler"))
+        (veri.get("ayarlar") or {}).get("izlenceler"), takvim=veri.get("akademikTakvim"))
     veri["kampus"] = kampus_bilgileri()
     veri["finalTakvimi"] = final_takvimi(branslar)
     veri["havuzDuyurulari"] = {
         "Matematik": duyuru_sitesi("https://matmuh.itu.edu.tr/"),
         "Fizik": duyuru_sitesi("https://fizik.itu.edu.tr/"),
+        "MAT havuz": duyuru_sitesi("https://mathavuz.itu.edu.tr/index.php"),      # vize salonu/sıra, telafi
+        "Fizik havuz": duyuru_sitesi("https://fizikhavuz.itu.edu.tr/"),
+        "Ekonomi (EKO 201E)": duyuru_sitesi("https://econ.itu.edu.tr/haberler"),  # quiz/vize tarihleri, salonlar
         "Öğrenci İşleri": duyuru_sitesi("https://www.sis.itu.edu.tr/TR/duyurular/duyurular.php"),
     }
     for k, v in veri["havuzDuyurulari"].items():
         print(f"  {k}: {len(v)} duyuru")
+    try:                                            # kaynak o an boş döndüyse (site hatası) eski veriyi koru
+        eski = json.loads((VERI / "panel.json").read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        eski = {}
+    for ad in ("akademikTakvim", "izlenceler", "kampus", "finalTakvimi"):
+        if not veri.get(ad) and eski.get(ad):
+            print(f"  {ad} boş geldi, önceki veri korundu")
+            veri[ad] = eski[ad]
     if veri.get("obs"):
         veri["dersDetay"] = ders_detay(veri)
     from calisma_kilidi import atomik_yaz
@@ -826,14 +895,18 @@ def whatsapp_ozeti():
         return None
     import drive_yerel                               # PC'deki Drive dosyası -> telefonda açılan link
     try:
-        klasor_id, idler = drive_yerel.klasor_idleri()
+        klasor_id, idler = drive_yerel.klasor_idleri("İTÜ")       # İTÜ/Dersler/<kod>/Diğer, İTÜ/Genel/<grup>
+        _, eski = drive_yerel.klasor_idleri()                      # henüz taşınmamış: İTÜ WhatsApp Dosyaları/<grup>
+        idler.update({"@eski/" + k: v for k, v in eski.items()})
     except Exception as e:
         print("  Drive linkleri okunamadı:", e.__class__.__name__)
         klasor_id, idler = None, {}
 
-    def goreli(yol):                                 # Drive klasörüne göre "FIZ101/x.pdf"
+    def goreli(yol):                                 # İTÜ klasörüne göre "Dersler/FIZ 101E/Diğer/x.pdf"
         yol = str(yol or "").replace("\\", "/")
-        for ayrac in (drive_yerel.KLASOR + "/", "whatsapp/dosyalar/"):
+        if drive_yerel.KLASOR + "/" in yol:
+            return "@eski/" + yol.split(drive_yerel.KLASOR + "/", 1)[1]
+        for ayrac in ("/İTÜ/", "whatsapp/dosyalar/"):
             if ayrac in yol:
                 return yol.split(ayrac, 1)[1]
         return ""
@@ -858,8 +931,51 @@ def whatsapp_ozeti():
             dosyalar.append({"ad": ad or Path(yol).name, "grup": grup, "tur": tur, "link": drive_link(yol),
                              "tarih": datetime.datetime.fromtimestamp(zaman).isoformat(timespec="minutes")})
         c.close()
+    # ödev teslim durumu (dosyalar.py Ninova'dan okur): yüklenen ödev "yapılacaklar"da çıkmaz
+    try:
+        odevler = list(json.loads((VERI / "dosyalar.json").read_text(encoding="utf-8")).get("odevler", {}).values())
+    except (OSError, ValueError):
+        odevler = []
+    # katıldığın ama dinlenmeyen İTÜ/kulüp grupları: panel "dinleyeyim mi?" diye sorar (karar verilmedikçe okunmaz)
+    ayar = json.loads((HERE / "ayarlar.json").read_text(encoding="utf-8")).get("whatsapp", {})
+    gecilen = set(ayar.get("gecilen", []))
+    ilgili = re.compile(r"\b[A-Z]{3}\s?\d{3}E?\b|itü|itu\b|kulüb|kulub|club|ieee|acm|inzva|havk|eestec|best\b|workshop|hackathon", re.I)
+    ilgisiz = re.compile(r"hazırlık|hazirlik|mezun|dolu\)|tercih|sohbet|halı ?saha|clash|\bcr\b|satranç|yurdu|koç", re.I)
+    try:
+        gruplar = json.loads((wa / "gruplar.json").read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        gruplar = []
+    adaylar = []
+    for g in gruplar:
+        tam = (g["topluluk"] + " / " if g.get("topluluk") else "") + g["ad"]
+        if g.get("dinleniyor") or g.get("toplulukAnaGrubu") or tam in gecilen:
+            continue
+        if ilgili.search(tam) and not ilgisiz.search(tam):
+            adaylar.append({"ad": tam, "uye": g.get("uye")})
+    # gruplarda paylaşılan WhatsApp grup davet linkleri (son 21 gün): panelde "Paylaşılan grup linkleri"
+    linkler, gorulen_link = [], set()
+    if (wa / "mesajlar.db").exists():
+        c = sqlite3.connect(wa / "mesajlar.db")
+        for zaman, grup, metin in c.execute(
+                "SELECT zaman, grup_adi, metin FROM mesajlar WHERE metin LIKE '%chat.whatsapp.com/%' "
+                "AND zaman > strftime('%s','now','-21 days') ORDER BY zaman DESC"):
+            for kod in re.findall(r"chat\.whatsapp\.com/([A-Za-z0-9]{10,})", metin or ""):
+                if kod in gorulen_link:
+                    continue
+                gorulen_link.add(kod)
+                ad = re.match(r"Grup daveti: (.+?) https://", metin or "")      # davet kartında grubun adı var
+                linkler.append({"link": "https://chat.whatsapp.com/" + kod, "grup": grup, "ad": ad.group(1) if ad else "",
+                                "tarih": datetime.datetime.fromtimestamp(zaman).isoformat(timespec="minutes")})
+        c.close()
+    try:
+        import etkinlikler
+        kaynaklar = [{"ad": k["ad"], "url": k["url"], "tur": k["tur"]} for k in etkinlikler.durum()["kaynaklar"]]
+    except Exception:
+        kaynaklar = []
     return {"guncellendi": notlar.get("guncellendi"), "olaylar": notlar.get("olaylar", []),
-            "dersler": notlar.get("dersler", {}),
+            "brifing": notlar.get("brifing"), "odevDurumu": odevler, "grupAdaylari": adaylar[:30],
+            "etkinlikKaynaklari": kaynaklar, "grupLinkleri": linkler[:20],
+            "dersler": notlar.get("dersler", {}), "firsatlar": notlar.get("firsatlar", []),
             "notlar": not_listesi, "dosyalar": dosyalar,
             "klasorLink": drive_yerel.link(klasor_id, klasor=True) if klasor_id else None,
             "kopru": {k: durum.get(k) for k in ("bagli", "dinlenen", "sonMesaj", "sonBaglanti")}}
@@ -870,12 +986,13 @@ def panel_uret(veri=None):
     if veri is None:
         veri = json.loads((VERI / "panel.json").read_text(encoding="utf-8"))
     veri = {**veri, "whatsapp": whatsapp_ozeti(),
-            "ayarlar": json.loads((HERE / "ayarlar.json").read_text(encoding="utf-8"))}   # ayar değişince hemen yansısın
+            "ayarlar": json.loads((HERE / "ayarlar.json").read_text(encoding="utf-8")),   # ayar değişince hemen yansısın
+            "onemliTarihler": json.loads((HERE / "onemli_tarihler.json").read_text(encoding="utf-8"))}
     import asistan                                   # Sor kutusu + Drive'daki "İTÜ Asistan" belgesi
     try:
-        (VERI / "asistan.md").write_text(asistan.metin(veri, mesajlar=True), encoding="utf-8")
+        asistan.yaz(veri)                            # veri/asistan.md + Drive'daki ham kayıtlar belgesi
         veri["asistanMetni"] = asistan.metin(veri, mesajlar=False)
-        asistan.drive_kopyasi(veri)                 # Google Drive klasörüne "İTÜ Asistan.txt" (Gemini okur)
+        veri["dersDosyalari"] = asistan.ders_dosyalari()
     except Exception as e:                           # asistan metni olmasa da panel üretilsin
         print("  asistan metni üretilemedi:", e.__class__.__name__, e)
     tpl = (HERE / "panel_template.html").read_text(encoding="utf-8")
@@ -922,6 +1039,35 @@ def izlence_ayristir(metin_blok, kod, kaynak, yil=None):
                     "bas": bas.isoformat(), "bit": bit.isoformat(),
                     "konu": re.sub(r"\s*(Make-?up\s+Quiz|Quiz\s*\d*|Demo\s+Quiz|Ara\s*Sınav|Midterm|Vize|Final)\s*$", "", icerik).strip(),
                     "kaynak": kaynak})
+    return out or izlence_tarihli_ayristir(metin_blok, kod, kaynak)
+
+
+# BLG 113E tipi: "04 (Oct.21, 2026) ... Quiz1 ... 05 (Oct.28, 2026) ..." — her haftanın tek bir ders tarihi var
+HAFTA_TARIHLI = re.compile(r"\b(?P<hafta>\d{1,2})\s*\(\s*(?P<ay>[A-Za-z]{3})[a-z]*\.?\s*(?P<gun>\d{1,2}),?\s*(?P<yil>20\d{2})\s*\)")
+TARIHLI_OLAY = [(r"\bQuiz\s*(\d+)", "Quiz {0}"), (r"Group\s+Project\s+Proposal", "Grup proje önerisi"),
+                (r"Student\s+Group\s+Presentations?|Poster\s+Presentations?", "Grup poster sunumu"),
+                (r"\bMidterm\b", "Midterm")]
+
+
+def izlence_tarihli_ayristir(metin_blok, kod, kaynak):
+    duz = re.sub(r"\s+", " ", metin_blok or "")
+    eslesme = list(HAFTA_TARIHLI.finditer(duz))
+    out = []
+    for i, m in enumerate(eslesme):
+        icerik = duz[m.end(): eslesme[i + 1].start() if i + 1 < len(eslesme) else min(len(duz), m.end() + 300)]
+        if re.search(r"National Holiday|Resmi Tatil|Resmî Tatil", icerik, re.I):
+            continue
+        ay = _ay_no(m.group("ay"))
+        if not ay:
+            continue
+        try:
+            gun = datetime.date(int(m.group("yil")), ay, int(m.group("gun")))
+        except ValueError:
+            continue
+        for desen, ad in TARIHLI_OLAY:
+            for o in re.finditer(desen, icerik, re.I):
+                out.append({"ders": kod, "tur": ad.format(*o.groups()), "hafta": int(m.group("hafta")),
+                            "bas": gun.isoformat(), "bit": gun.isoformat(), "konu": "", "kaynak": kaynak})
     return out
 
 
@@ -941,16 +1087,79 @@ def _pdf_metni(s, url):
         return ""
 
 
-IZLENCE_KAYNAK = {"FIZ": "https://fizikhavuz.itu.edu.tr/docs/syllabus/{kod}.pdf"}
+IZLENCE_KAYNAK = {"FIZ": "https://fizikhavuz.itu.edu.tr/docs/syllabus/{kod}.pdf",
+                  "MAT": "https://mathavuz.itu.edu.tr/syllabus.php?ders={kod}"}
 
 
-def izlenceler(s, kodlar, ek=None, log=print):
+def hafta_araliklari(takvim, yil=None):
+    """Akademik takvimden 'n. hafta -> (pazartesi, cuma)'. Ara tatil haftası numara almaz (havuz izlenceleri böyle)."""
+    lisans = [x for x in (takvim or []) if re.search(r"Lisans / Önlisans", x.get("tablo") or "")]
+    bul = lambda r: next((x for x in lisans if re.search(r, x.get("olay") or "", re.I)), None)
+    bas = bul(r"Güz Yarıyılı Başlangıcı")
+    if bas:
+        b = datetime.date.fromisoformat(bas["bas"][:10])
+    else:                                               # takvim yoksa: eylülün son pazartesi civarı
+        y = yil or datetime.date.today().year
+        b = datetime.date(y, 9, 28)
+    pzt = b - datetime.timedelta(days=b.weekday())
+    tatil = bul(r"^Ara Tatil")
+    tatil_pzt = None
+    if tatil:
+        t = datetime.date.fromisoformat(tatil["bas"][:10])
+        tatil_pzt = t - datetime.timedelta(days=t.weekday())
+
+    def aralik(n):
+        d = pzt + datetime.timedelta(weeks=n - 1)
+        if tatil_pzt and d >= tatil_pzt:
+            d += datetime.timedelta(weeks=1)
+        return d, d + datetime.timedelta(days=4)
+    return aralik
+
+
+def html_izlence_ayristir(ham, kod, kaynak, aralik):
+    """mathavuz syllabus.php: 'Hafta | Konular | Quiz' tablosu (quiz sütununda numara) -> quiz olayları."""
+    out = []
+    for satir in re.findall(r"<tr[^>]*>(.*?)</tr>", ham, re.S | re.I):
+        h = [metin(c) for c in re.findall(r"<t[dh][^>]*>(.*?)</t[dh]>", satir, re.S | re.I)]
+        if len(h) < 3 or not re.fullmatch(r"\d{1,2}", h[0]):
+            continue
+        hafta, konu, quiz = int(h[0]), h[1], h[-1]
+        q = re.fullmatch(r"(?:Quiz\s*)?(\d{1,2})", quiz, re.I)
+        if not q:
+            continue
+        bas, bit = aralik(hafta)
+        out.append({"ders": kod, "tur": f"Quiz {q.group(1)}", "hafta": hafta, "bas": bas.isoformat(),
+                    "bit": bit.isoformat(), "kaynak": kaynak,
+                    "konu": konu + (" · 3 saatlik dersin sonunda" if kod.startswith("MAT") else "")})
+    return out
+
+
+def izlenceler(s, kodlar, ek=None, log=print, takvim=None):
     """Havuz derslerinin izlencelerinden quiz/sınav takvimi + not ağırlıkları."""
     out, bilgi = [], {}
+    aralik = hafta_araliklari(takvim)
     for kod in sorted(set(kodlar)):
         brans, no = (kod.split() + [""])[:2]
         url = (ek or {}).get(kod) or (IZLENCE_KAYNAK.get(brans, "").format(kod=brans + no) if brans in IZLENCE_KAYNAK else "")
         if not url:
+            continue
+        if not url.lower().endswith(".pdf"):            # HTML izlence (mathavuz)
+            try:
+                ham = s.get(url, timeout=40).text
+            except requests.RequestException as e:
+                log(f"  izlence {kod} alınamadı ({e.__class__.__name__})")
+                continue
+            bulunan = html_izlence_ayristir(ham, kod, url, aralik)
+            if not bulunan:
+                log(f"  izlence {kod}: tabloda quiz bulunamadı")
+                continue
+            out += bulunan
+            duz = metin(ham)
+            ag = re.search(r"(\w+ quizzes with \d+%[^.]*)", duz, re.I)
+            vf = re.search(r"([^.]{0,120}(?:at least \*?\*?70%|VF)[^.]{0,120})", duz, re.I)
+            bilgi[kod] = {"url": url, "agirliklar": [ag.group(1)] if ag else [],
+                          "vfKurali": vf.group(1).strip()[:220] if vf else None}
+            log(f"  izlence {kod}: {len(bulunan)} quiz (HTML)")
             continue
         metin_pdf = _pdf_metni(s, url)
         if not metin_pdf:

@@ -1,3 +1,7 @@
 requests>=2.32
-pypdf>=5.0        # izlence (syllabus) PDF'lerini okumak için
-segno>=1.6        # QR kodları (WhatsApp eşleştirme, bildirim kanalı)
+pypdf>=5.0           # izlence (syllabus) PDF'leri
+segno>=1.6           # QR kodları (WhatsApp eşleştirme, bildirim kanalı)
+beautifulsoup4>=4.12 # etkinlik/haber kaynakları (arı24 vb.)
+pymupdf              # ders dosyaları: PDF metni, oturma planı
+python-pptx          # ders dosyaları: slayt başlıkları
+python-docx          # ders dosyaları: Word metni
